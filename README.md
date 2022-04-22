@@ -43,6 +43,7 @@ At final stage I want to be able to do some obvious operations:
 
 Some already supported API. Maybe in the future I will use some jsdoc
 
+```
 class Node
   constructor (line, nodeIndex = 0, nestingLevel = 0)
   getAttr (name)
@@ -60,3 +61,4 @@ class Nodes
   byAttrsVals (filter = [])
   byTags (tags = [])
   byAttrs (filter = [])
+```
