@@ -30,6 +30,8 @@ At final stage I want to be able to do some obvious operations:
   - insert node after/ before current
   - replace node
   - remove node
+- and more
+  - clone nodes
 
 ## Challenges
 
