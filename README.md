@@ -11,6 +11,9 @@ At final stage I want to be able to do some obvious operations:
   - accept closing tags (no validation it tagg properly closed)
   - accept self closing tags
   - accept text nodes
+- write xml file
+  - minified
+  - formatted
 - be able to find:
   - by tag names
   - by attributes
@@ -19,10 +22,14 @@ At final stage I want to be able to do some obvious operations:
   - read node tag name
   - read attribute value
   - add new attribute
+  - add multivalue attribute
   - update existing attribute
+  - update multivalue attribute
   - remove existing attribute
-  - be able to use boolean as attr="value" attributes
-- be able to change travel
+  - remove multivalue attribute/ remove all
+  - to use boolean as attr="value" attributes
+- be able to change/ travel
+  - access root
   - through children any depth
   - to parent
   - to next/ previous sibling
