@@ -157,6 +157,7 @@ class Node {
   rm () {
     const { from, length } = this._findNodeRange()
     this.nodes.splice(from, length)
+    this._renumber()
   }
 
   after (nodes) {
@@ -165,13 +166,19 @@ class Node {
   }
 
   before (nodes) {
-    const { from, length } = this._findNodeRange()
+    const { from } = this._findNodeRange()
     this.nodes.splice(from - 1, 0, nodes)
   }
 
   replace (nodes) {
     const { from, length } = this._findNodeRange()
     this.nodes.splice(from, length, nodes)
+  }
+
+  _renumber () {
+    for (let i = 0; i < this.nodes.length; i++) {
+      this.nodes[i].nodeIndex = i;
+    }
   }
 
   tagName () {

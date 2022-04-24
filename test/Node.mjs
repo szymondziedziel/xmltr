@@ -396,4 +396,45 @@ describe('Node', function () {
       )
     })
   })
+
+  describe('Removing node from tree', function () {
+    it('Remove Root', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      tree.root().rm()
+      assert.deepEqual(
+        tree.toArrayOfStrings(),
+        [ ]
+      )
+    })
+
+    it('Remove last-name', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const lastName = tree.byTags('student')[0].byTags('last-name')[0]
+      lastName.rm()
+      assert.deepEqual(
+        tree.toArrayOfStrings(),
+        [
+          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
+          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]'
+        ]
+      )
+    })
+
+    it('Remove first-name and last-name', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const firstName = tree.byTags('student')[0].byTags('first-name')[0]
+      firstName.rm()
+      const lastName = tree.byTags('student')[0].byTags('last-name')[0]
+      lastName.rm()
+      assert.deepEqual(
+        tree.toArrayOfStrings(),
+        [
+          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
+        ]
+      )
+    })
+  })
 })
