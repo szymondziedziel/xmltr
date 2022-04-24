@@ -15,7 +15,7 @@ describe('Node', function () {
         '[nodeDescription=[a] nodeIndex=[0] nestingLevel=[0]]'
       )
       assert.equal(
-        (new Node('<a>', 0, 0)).toString(),
+        (new Node('<a>')).toString(),
         '[nodeDescription=[a] nodeIndex=[0] nestingLevel=[0]]'
       )
     })
@@ -24,63 +24,63 @@ describe('Node', function () {
   describe('Allow different tag names', function () {
     it('Should have single word tag name', function () {
       assert.equal(
-        (new Node('<p>', 0, 0)).tagName(),
+        (new Node('<p>')).tagName(),
         'p'
       )
     })
 
     it('Should have single capitalised word tag name', function () {
       assert.equal(
-        (new Node('<Single>', 0, 0)).tagName(),
+        (new Node('<Single>')).tagName(),
         'Single'
       )
     })
 
     it('Should have single const-like-uppercase word tag name', function () {
       assert.equal(
-        (new Node('<UPPER>', 0, 0)).tagName(),
+        (new Node('<UPPER>')).tagName(),
         'UPPER'
       )
     })
 
     it('Should have double word kebab-case tag name', function () {
       assert.equal(
-        (new Node('<simple-action>', 0, 0)).tagName(),
+        (new Node('<simple-action>')).tagName(),
         'simple-action'
       )
     })
 
     it('Should have double word sneak-case tag name', function () {
       assert.equal(
-        (new Node('<simple_action>', 0, 0)).tagName(),
+        (new Node('<simple_action>')).tagName(),
         'simple_action'
       )
     })
 
     it('Should have four-word camel-case tag name', function () {
       assert.equal(
-        (new Node('<someLongerTagName>', 0, 0)).tagName(),
+        (new Node('<someLongerTagName>')).tagName(),
         'someLongerTagName'
       )
     })
 
     it('Should have four-word const-like-upprecase tag name', function () {
       assert.equal(
-        (new Node('<SOME_LONGER_TAG_NAME>', 0, 0)).tagName(),
+        (new Node('<SOME_LONGER_TAG_NAME>')).tagName(),
         'SOME_LONGER_TAG_NAME'
       )
     })
 
     it('Should allow numbers in tag name', function () {
       assert.equal(
-        (new Node('<build-variant-1>', 0, 0)).tagName(),
+        (new Node('<build-variant-1>')).tagName(),
         'build-variant-1'
       )
     })
 
     it('Should have mixed tag name', function () {
       assert.equal(
-        (new Node('<_private_URLBuilder_Factory>', 0, 0)).tagName(),
+        (new Node('<_private_URLBuilder_Factory>')).tagName(),
         '_private_URLBuilder_Factory'
       )
     })
@@ -151,7 +151,7 @@ describe('Node', function () {
 
   describe('Getting all attributes from single tag', function () {
     it('Should get proper attribute value', function () {
-      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>', 0, 0)
+      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>')
       assert.equal(node.getAttr('attr1'), 'value1')
       assert.equal(node.getAttr('attr2'), 'value2')
       assert.equal(node.getAttr('boolattr1'), true)
@@ -161,7 +161,7 @@ describe('Node', function () {
 
   describe('Removing all attributes from single tag', function () {
     it('Should remove proper attribute value', function () {
-      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>', 0, 0)
+      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>')
       assert.equal(node.rmAttr('attr1'), true)
       assert.equal(node.getAttr('attr1'), null)
       assert.equal(node.rmAttr('attr2'), true)
@@ -174,7 +174,7 @@ describe('Node', function () {
 
   describe('Setting/ updating all attributes from single tag', function () {
     it('Should set|update proper attribute value', function () {
-      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>', 0, 0)
+      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>')
       node.setAttr('attr1', 'newValue1')
       assert.equal(node.getAttr('attr1'), 'newValue1')
       node.setAttr('attr2', 'newValue2')
@@ -188,75 +188,90 @@ describe('Node', function () {
 
   describe('Getting multivalue attribute', function () {
     it('When no attributes with specified name', function () {
-      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>', 0, 0)
+      const node = new Node('<some-tag attr2="value2" boolattr1>')
       assert.deepEqual(node.getMultiAttr('attr1'), [])
     })
 
-    it('When only one attribute sith specified name. Should return single element array', function () {
-      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>', 0, 0)
+    it('When only one attribute with specified name. Should return single element array', function () {
+      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>')
       assert.deepEqual(node.getMultiAttr('attr1'), ['value1'])
     })
 
     it('When more attributes with specified name. Should get them all as array', function () {
-      const node = new Node('<some-tag attr1="value1.1" attr1="value1.2" attr2="value2" attr1="value1.3" boolattr1 attr1="value1.4">', 0, 0)
-      assert.deepEqual(node.getMultiAttr('attr1'), ['value1.1', 'value1.2', 'value1.3', 'value.1.4'])
+      const node = new Node('<some-tag attr1="value1.1" attr1="value1.2" attr2="value2" attr1="value1.3" boolattr1 attr1="value1.4">')
+      assert.deepEqual(node.getMultiAttr('attr1'), ['value1.1', 'value1.2', 'value1.3', 'value1.4'])
     })
   })
 
   describe('Removing multivalue attribute', function () {
     it('When no attributes with specified name', function () {
-      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>', 0, 0)
+      const node = new Node('<some-tag attr2="value2" boolattr1>')
       assert.equal(node.rmMultiAttr('attr1'), 0)
     })
 
-    it('When only one attribute sith specified name. Should return single element array', function () {
-      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>', 0, 0)
+    it('When only one attribute with specified name. Should return removed count', function () {
+      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>')
       assert.equal(node.rmMultiAttr('attr1'), 1)
     })
 
-    it('When more attributes with specified name. Should get them all as array', function () {
-      const node = new Node('<some-tag attr1="value1.1" attr1="value1.2" attr2="value2" attr1="value1.3" boolattr1 attr1="value1.4">', 0, 0)
+    it('When more attributes with specified name. Should return removed count', function () {
+      const node = new Node('<some-tag attr1="value1.1" attr1="value1.2" attr2="value2" attr1="value1.3" boolattr1 attr1="value1.4">')
       assert.equal(node.rmMultiAttr('attr1'), 4)
     })
   })
 
   describe('Setting multivalue attribute', function () {
     it('When no values provided', function () {
-      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>', 0, 0)
+      const node = new Node('<some-tag attr2="value2" boolattr1>')
       node.setMultiAttr('attr1', [])
       assert.deepEqual(node.getMultiAttr('attr1'), [])
     })
 
     it('When only one value provided. Should return single element array', function () {
-      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>', 0, 0)
-      node.setMultiAttr('attr1', ['attr1.1'])
+      const node = new Node('<some-tag attr2="value2" boolattr1>')
+      node.setMultiAttr('attr1', ['value1.1'])
       assert.deepEqual(node.getMultiAttr('attr1'), ['value1.1'])
     })
 
     it('When more values provided. Should get them all as array', function () {
-      const node = new Node('<some-tag attr1="value1.1" attr1="value1.2" attr2="value2" attr1="value1.3" boolattr1 attr1="value1.4">', 0, 0)
+      const node = new Node('<some-tag attr2="value2" boolattr1>')
       node.setMultiAttr('attr1', ['value1.1', 'value1.2', 'value1.3', 'value1.4'])
-      assert.deepEqual(node.getMultiAttr('attr1'), ['value1.1', 'value1.2', 'value1.3', 'value.1.4'])
+      assert.deepEqual(node.getMultiAttr('attr1'), ['value1.1', 'value1.2', 'value1.3', 'value1.4'])
     })
   })
 
   describe('Getting children', function () {
-    const tree = new Nodes(SAMPLE_XML)
-    const student = tree.byTags
-    assert.deepEqual(
-      tree.root().children().map(node => node.toString()),
-      [
-        '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]'
-      ]
-    )
+    it('Getting children', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      assert.deepEqual(
+        tree.root().children().map(node => node.toString()),
+        [
+          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]'
+        ]
+      )
+    })
+
+    it('Getting children 2', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      assert.deepEqual(
+        tree.root().children()[0].children().map(node => node.toString()),
+        [
+          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
+          '[nodeDescription=[last-name] nodeIndex=[4] nestingLevel=[2]]'
+        ]
+      )
+    })
+
+    it('Getting children text node', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      assert.deepEqual(
+        tree.root().children()[0].children()[0].children().map(node => node.toString()),
+        [
+          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
+        ]
+      )
+    })
   })
 
-  describe('Getting children', function () {
-    const tree = new Nodes(SAMPLE_XML)
-    const student = tree.byTags
-    assert.deepEqual(
-      tree.root().children()[0].toString(),
-      '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]'
-    )
-  })
+  // settingmultiplevalue when attribute already exists
 })
