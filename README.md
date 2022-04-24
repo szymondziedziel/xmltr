@@ -33,6 +33,7 @@ At final stage I want to be able to do some obvious operations:
   - through children any depth
   - to parent
   - to next/ previous sibling
+  - simple subsearching
 - be able to change structue
   - insert node after/ before current
   - replace node

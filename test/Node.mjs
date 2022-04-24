@@ -2,6 +2,7 @@ import assert from 'assert'
 import { Node, Nodes } from '../xmltr.mjs'
 
 const SAMPLE_XML = '<persons><student><first-name>John</first-name><last-name>Doe</last-name></student></persons>'
+const SAMPLE_XML_2 = '<shop><shop-cart items="3"><item name="1" /><item name="2" /><item name="3" /></shop-cart></shop>'
 
 describe('Node', function () {
   describe('Constructing object', function () {
@@ -159,7 +160,14 @@ describe('Node', function () {
     })
   })
 
-  describe('Removing all attributes from single tag', function () {
+  describe('Getting more attributes from single tag', function () {
+    it('Should get proper attribute value', function () {
+      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>')
+      assert.deepEqual(node.getAttr('attr1', 'attr2'), ['value1', 'value2'])
+    })
+  })
+
+  describe('Removing all attributes in one call from single tag', function () {
     it('Should remove proper attribute value', function () {
       const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>')
       assert.equal(node.rmAttr('attr1'), true)
@@ -169,6 +177,16 @@ describe('Node', function () {
       assert.equal(node.rmAttr('boolattr1'), true)
       assert.equal(node.getAttr('boolattr1'), null)
       assert.equal(node.rmAttr('non-existing-attr'), false)
+    })
+  })
+
+  describe('Removing more attributes in one call fomr single tag', function () {
+    it('Should remove proper attribute value', function () {
+      const node = new Node('<some-tag attr1="value1" attr2="value2" boolattr1>')
+      assert.deepEqual(node.rmAttr('attr1', 'attr2', 'boolattr1', 'non-existing-attr'), [true, true, true, false])
+      assert.equal(node.getAttr('attr1'), null)
+      assert.equal(node.getAttr('attr2'), null)
+      assert.equal(node.getAttr('boolattr1'), null)
     })
   })
 
@@ -203,6 +221,13 @@ describe('Node', function () {
     })
   })
 
+  describe('Getting multivalue attributes', function () {
+    it('When two attributes given two times', function () {
+      const node = new Node('<some-tag attr1="value1.1" attr1="value1.2" attr2="value2.1" attr2="value2.2" boolattr1>')
+      assert.deepEqual(node.getMultiAttr('attr1', 'attr2'), [['value1.1', 'value1.2'], ['value2.1', 'value2.2']])
+    })
+  })
+
   describe('Removing multivalue attribute', function () {
     it('When no attributes with specified name', function () {
       const node = new Node('<some-tag attr2="value2" boolattr1>')
@@ -217,6 +242,13 @@ describe('Node', function () {
     it('When more attributes with specified name. Should return removed count', function () {
       const node = new Node('<some-tag attr1="value1.1" attr1="value1.2" attr2="value2" attr1="value1.3" boolattr1 attr1="value1.4">')
       assert.equal(node.rmMultiAttr('attr1'), 4)
+    })
+  })
+
+  describe('Removing multivalue attributes', function () {
+    it('When two attributes given two times', function () {
+      const node = new Node('<some-tag attr1="value1.1" attr1="value1.2" attr2="value2.1" attr2="value2.2" boolattr1>')
+      assert.deepEqual(node.rmMultiAttr('attr1', 'attr2'), [2, 2])
     })
   })
 
@@ -237,6 +269,12 @@ describe('Node', function () {
       const node = new Node('<some-tag attr2="value2" boolattr1>')
       node.setMultiAttr('attr1', ['value1.1', 'value1.2', 'value1.3', 'value1.4'])
       assert.deepEqual(node.getMultiAttr('attr1'), ['value1.1', 'value1.2', 'value1.3', 'value1.4'])
+    })
+
+    it('When more values provided to tag which aldready has some attribute with same name. Should get them all as array', function () {
+      const node = new Node('<some-tag attr1="a" attr1="b" attr2="value2" attr1 boolattr1 attr1="1">')
+      node.setMultiAttr('attr1', ['value1.1', 'value1.2', 'value1.3', 'value1.4'])
+      assert.deepEqual(node.getMultiAttr('attr1'), ['a', 'b', true, '1', 'value1.1', 'value1.2', 'value1.3', 'value1.4'])
     })
   })
 
@@ -273,5 +311,89 @@ describe('Node', function () {
     })
   })
 
-  // settingmultiplevalue when attribute already exists
+  describe('Traveling to parent, previous and next', function () {
+    it('Root has no parent', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      assert.equal(tree.root().parent(), null)
+    })
+
+    it('Root has no previous', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      assert.equal(tree.root().previous(), null)
+    })
+
+    it('Root has no next', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      assert.equal(tree.root().next(), null)
+    })
+
+    it('Student\'s children have Student node as parent', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const student = tree.byTags('student')[0]
+      assert.equal(
+        student.children()[0].parent().toString(),
+        '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]'
+      )
+      assert.equal(
+        student.children()[1].parent().toString(),
+        '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]'
+      )
+    })
+
+    it('first-name has last-name as next', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const firstName = tree.byTags('student')[0].children()[0]
+      assert.equal(
+        firstName.next().toString(),
+        '[nodeDescription=[last-name] nodeIndex=[4] nestingLevel=[2]]'
+      )
+    })
+
+    it('last-name has first-name as previous', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const lastName = tree.byTags('student')[0].children()[1]
+      assert.equal(
+        lastName.previous().toString(),
+        '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]'
+      )
+    })
+  })
+
+  describe('Subsearches', function () {
+    it('Find student then find last-name', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const lastName = tree.byTags('student')[0].byTags('last-name')[0]
+      assert.equal(
+        lastName.toString(),
+        '[nodeDescription=[last-name] nodeIndex=[4] nestingLevel=[2]]'
+      )
+    })
+
+    it('Find items by attrVal then item by attrVal', function () {
+      const tree = new Nodes(SAMPLE_XML_2)
+      const item1 = tree.byAttrsVals('items="3"')[0].byAttrsVals('name="1"')[0]
+      assert.equal(
+        item1.toString(),
+        '[nodeDescription=[item name="1" /] nodeIndex=[2] nestingLevel=[2]]'
+      )
+    })
+
+    it('Find items by attr then item by attr', function () {
+      const tree = new Nodes(SAMPLE_XML_2)
+      const item1 = tree.byAttrs('items')[0].byAttrs('name')[0]
+      assert.equal(
+        item1.toString(),
+        '[nodeDescription=[item name="1" /] nodeIndex=[2] nestingLevel=[2]]'
+      )
+    })
+
+    it('Find items by tag name then item by attr', function () {
+      const tree = new Nodes(SAMPLE_XML_2)
+      const item1 = tree.byTags('shop-cart')[0].byAttrs('name')[2]
+      assert.equal(
+        item1.toString(),
+        '[nodeDescription=[item name="3" /] nodeIndex=[4] nestingLevel=[2]]'
+      )
+    })
+  })
 })
