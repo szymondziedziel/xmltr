@@ -6,30 +6,73 @@ class Node {
     this.nodes = null
   }
 
-  getAttr (name) {
-    const { attrValue, attrName } = this.tagNodeArrayDescription(name)
-
-    if (attrValue !== undefined) {
-      return attrValue.replaceAll('"', '')
-    } else {
-      return attrName !== undefined ? true : null
+  getAttr (...names) {
+    if (names.length < 1) {
+      throw Error('Node::getAttr requires at least one attribute name')
     }
+    const values = names.map(name => this.tagNodeArrayDescription(name).first.attrValue)
+    return values.length > 1 ? values : values[0]
   }
 
-  rmAttr (name) {
-    const { tagName, attrIndex, attrs, attrName } = this.tagNodeArrayDescription(name)
+  getMultiAttr (...names) {
+    if (names.length < 1) {
+      throw Error('Node::getMultiAttr requires at least one attribute name')
+    }
+    const nameValues = names
+      .map(name =>
+        this.tagNodeArrayDescription(name).all.attrsValues.map(av => av[1])
+      )
+      .map(nameValues => nameValues.filter(nameValue => nameValue !== undefined))
 
-    if (attrName !== undefined) {
-      delete attrs[attrIndex]
-      this.line = `<${tagName} ${attrs.join(' ')}>`
-      return true
+    return nameValues.length > 1 ? nameValues : nameValues[0]
+  }
+
+  rmAttr (...names) {
+    if (names.length < 1) {
+      throw Error('Node:rmAttr requires at least one attribute name')
+    }
+    const nameValues = names.map(name => {
+      const { tagName, attrIndex, attrs, attrName } = this.tagNodeArrayDescription(name).first
+
+      if (attrName !== undefined) {
+        delete attrs[attrIndex]
+        this.line = `<${tagName} ${attrs.join(' ')}>`
+        return true
+      }
+
+      return false
+    })
+
+    return nameValues.length > 1 ? nameValues : nameValues[0]
+  }
+
+  rmMultiAttr (...names) {
+    if (names.length < 1) {
+      throw Error('Node:rmMultiAttr requires at least one attribute name')
     }
 
-    return false
+    const attrsIndexes = names
+      .reduce((indexes, name) => {
+        indexes.push(...this.tagNodeArrayDescription(name).all.attrsIndexes)
+        return indexes
+      }, [])
+    const rmResult = names
+      .map(name => this.tagNodeArrayDescription(name).all.attrsIndexes.length)
+
+    const [tagName, ...attrs] = this._nodeDescription()
+      .match(/[a-zA-Z0-9-_]+="[^"]+"|[a-zA-Z0-9-_]+/g) || []
+
+    if (attrsIndexes.length > 0) {
+      attrsIndexes.forEach(i => delete attrs[i])
+      this.line = `<${tagName} ${attrs.join(' ')}>`
+      return rmResult
+    }
+
+    return 0
   }
 
   setAttr (name, value) {
-    const { tagName, attrIndex, attrs, attr, attrName } = this.tagNodeArrayDescription(name)
+    const { tagName, attrIndex, attrs, attr, attrName } = this.tagNodeArrayDescription(name).first
 
     if (attrName !== undefined) {
       attrs[attrIndex] = value !== undefined ? `${name}="${value}"` : name
@@ -40,54 +83,99 @@ class Node {
     this.line = `<${tagName} ${attrs.join(' ')}>`
   }
 
-  tagNodeArrayDescription (name) {
-    this.throwErrorWhenTextNode()
-    const nodeParts = this.nodeDescription().match(/[a-zA-Z0-9-_]+="[^"]+"|[a-zA-Z0-9-_]+/g) || []
-    const [tagName, ...attrs] = nodeParts
-    const attrIndex = attrs.findIndex(attr => attr.split('=')[0] === name)
-    const attr = attrs[attrIndex]
-    const [attrName, attrValue] = attr !== undefined
-      ? attr.split('=')
-      : []
+  setMultiAttr (name, values = []) {
+    const [tagName, ...attrs] = this._nodeDescription()
+      .match(/[a-zA-Z0-9-_]+="[^"]+"|[a-zA-Z0-9-_]+/g) || []
 
-    return { tagName, attrs, attrName, attrValue, attrIndex }
+    attrs.push(...values.map(value => `${name}="${value}"`))
+
+    this.line = `<${tagName} ${attrs.join(' ')}>`
+  }
+
+  byAttrsVals (...filters) {
+    return this._searchNodesSubset()
+      .filter(node => filters
+        .map(filter => {
+          const [filterAttrName, filterAttrValue] = filter.split('=')
+            .map(elem => elem.replaceAll('"', ''))
+          return node.getMultiAttr(filterAttrName).includes(filterAttrValue)
+        })
+        .find(filterMatches => filterMatches === true) !== undefined)
+  }
+
+  byTags (...tags) {
+    return this._searchNodesSubset().filter(node => tags.includes(node.tagName()))
+  }
+
+  byAttrs (...filters) {
+    return this._searchNodesSubset()
+      .filter(node => filters
+        .map(filter => node.getAttr(filter) !== undefined)
+        .find(filterMatches => filterMatches === true) !== undefined)
+  }
+
+  _searchNodesSubset () {
+    const { from, length } = this._findNodeRange()
+    return this.nodes.slice(from, from + length)
+  }
+
+  tagNodeArrayDescription (name) {
+    this._throwErrorWhenTextNode()
+    const nodeParts = this._nodeDescription()
+      .match(/[a-zA-Z0-9-_]+="[^"]+"|[a-zA-Z0-9-_]+/g) || []
+    const [tagName, ...attrs] = nodeParts
+    const indexedAttrs = attrs.map((attr, index) => [index, attr])
+    const selectedIndexedAttrs = indexedAttrs
+      .filter(indexedAttr => indexedAttr[1].split('=')[0] === name)
+    const attrsIndexes = selectedIndexedAttrs
+      .map(selectedIndexedAttr => selectedIndexedAttr[0])
+    let attrsValues = selectedIndexedAttrs.map(([, attr]) => {
+      const [attrName, attrValue] = attr.split('=')
+        .map(elem => elem.replaceAll('"', ''))
+
+      if (attrName !== undefined) {
+        return [attrName, attrValue !== undefined ? attrValue : true]
+      } else {
+        return [attrName, null]
+      }
+    })
+    attrsValues = attrsValues.length > 0 ? attrsValues : [[]]
+
+    return {
+      first: {
+        tagName,
+        attr: attrs[0],
+        attrs,
+        attrIndex: attrsIndexes[0],
+        attrName: attrsValues[0][0],
+        attrValue: attrsValues[0][1]
+      },
+      all: { tagName, attrs, attrsIndexes, attrsValues }
+    }
   }
 
   rm () {
-    const { from, length } = this.findNodeRange()
+    const { from, length } = this._findNodeRange()
     this.nodes.splice(from, length)
   }
 
   after (nodes) {
-    const { from, length } = this.findNodeRange()
+    const { from, length } = this._findNodeRange()
     this.nodes.splice(from + length, 0, nodes)
   }
 
   before (nodes) {
-    const { from, length } = this.findNodeRange()
+    const { from, length } = this._findNodeRange()
     this.nodes.splice(from - 1, 0, nodes)
   }
 
   replace (nodes) {
-    const { from, length } = this.findNodeRange()
+    const { from, length } = this._findNodeRange()
     this.nodes.splice(from, length, nodes)
   }
 
-  findNodeRange () {
-    const from = this.nodeIndex
-    let length = 1
-    for (let i = from + 1; i < this.nodes.length; i++) {
-      if (this.nodes[i].nestingLevel > this.nestingLevel) {
-        length++
-      } else {
-        break
-      }
-    }
-    return { from, length }
-  }
-
   tagName () {
-    return this.nodeDescription().split(' ')[0]
+    return this._nodeDescription().split(' ')[0]
   }
 
   parent () {
@@ -99,6 +187,26 @@ class Node {
       }
     }
     return null
+  }
+
+  previous () {
+    if (!this.nodes) { return null }
+    const parent = this.parent()
+    if (!parent) { return null }
+    const children = parent.children()
+    const currentArrIndex = children
+      .findIndex(child => child.nodeIndex === this.nodeIndex)
+    return children[currentArrIndex - 1]
+  }
+
+  next () {
+    if (!this.nodes) { return null }
+    const parent = this.parent()
+    if (!parent) { return null }
+    const children = parent.children()
+    const currentArrIndex = children
+      .findIndex(child => child.nodeIndex === this.nodeIndex)
+    return children[currentArrIndex + 1]
   }
 
   children () {
@@ -115,11 +223,46 @@ class Node {
     return children
   }
 
-  toString () {
-    return `[nodeDescription=[${this.nodeDescription()}] nodeIndex=[${this.nodeIndex}] nestingLevel=[${this.nestingLevel}]]`
+  isTagNode () {
+    return this.line[0] === '<'
   }
 
-  nodeDescription () {
+  isTextNode () {
+    return this._nodeDescription()[0] === '#'
+  }
+
+  toString () {
+    return `[nodeDescription=[${this._nodeDescription()}] nodeIndex=[${this.nodeIndex}] nestingLevel=[${this.nestingLevel}]]`
+  }
+
+  _findNodeRange () {
+    const from = this.nodeIndex
+    let length = 1
+    for (let i = from + 1; i < this.nodes.length; i++) {
+      if (this.nodes[i].nestingLevel > this.nestingLevel) {
+        length++
+      } else {
+        break
+      }
+    }
+    return { from, length }
+  }
+
+  _cloneNodeDeep () {
+    const { from, length } = this._findNodeRange()
+    const deepClone = []
+    for (let i = from; i < from + length; i++) {
+      deepClone.push(this.nodes[i]._cloneNodeShallow())
+    }
+    return deepClone
+  }
+
+  _cloneNodeShallow () {
+    const { line, nodeIndex, nestingLevel } = this
+    return JSON.parse(JSON.stringify({ line, nodeIndex, nestingLevel }))
+  }
+
+  _nodeDescription () {
     if (this.line[0] === '<') {
       return this.line.substr(1, this.line.length - 2)
     }
@@ -127,15 +270,7 @@ class Node {
     return `#text ${this.line}`
   }
 
-  isTagNode () {
-    return this.line[0] === '<'
-  }
-
-  isTextNode () {
-    return this.nodeDescription()[0] === '#'
-  }
-
-  throwErrorWhenTextNode () {
+  _throwErrorWhenTextNode () {
     if (this.isTextNode()) {
       throw Error('Accessing tag in text node')
     }
@@ -145,7 +280,7 @@ class Node {
 class Nodes {
   constructor (data) {
     if (typeof data === 'string') {
-      this.nodes = this.parse(data)
+      this.nodes = this._parse(data)
     } else if (Array.isArray(data)) {
       this.nodes = data
     } else {
@@ -153,22 +288,26 @@ class Nodes {
     }
   }
 
-  byAttrsVals (filter = []) {
+  root () {
+    return this.nodes[0]
+  }
+
+  byAttrsVals (...filters) {
     return this.nodes.filter(node => {
-      const nodeParts = node.nodeDescription().match(/[a-zA-Z-_]+="[^"]+"/g) || []
-      return (new Set([...filter, ...nodeParts])).size === nodeParts.length
+      const nodeParts = node._nodeDescription().match(/[a-zA-Z-_]+="[^"]+"/g) || []
+      return (new Set([...filters, ...nodeParts])).size === nodeParts.length
     })
   };
 
-  byTags (tags = []) {
-    return this.nodes.filter(node => tags.includes(node.nodeDescription().split(' ')[0]))
+  byTags (...tags) {
+    return this.nodes.filter(node => tags.includes(node.tagName()))
   }
 
-  byAttrs (filter = []) {
+  byAttrs (...filters) {
     return this.nodes.filter(node => {
-      const attrs = (node.nodeDescription().match(/[a-zA-Z-_]+="[^"]+"|[a-zA-Z-_]+/g) || []).map(attrVal => attrVal.split('=')[0])
+      const attrs = (node._nodeDescription().match(/[a-zA-Z-_]+="[^"]+"|[a-zA-Z-_]+/g) || []).map(attrVal => attrVal.split('=')[0])
       attrs.shift()
-      return (new Set([...filter, ...attrs])).size === attrs.length
+      return (new Set([...filters, ...attrs])).size === attrs.length
     })
   }
 
@@ -180,7 +319,7 @@ class Nodes {
     return `[\n${this.toArrayOfStrings()}\n]`
   }
 
-  extract (xml) {
+  _extract (xml) {
     const nodes = []
     let node = ''
     for (let i = 0; i < xml.length; i++) {
@@ -206,8 +345,8 @@ class Nodes {
     return nodes
   }
 
-  parse (xml) {
-    const lines = this.extract(xml)
+  _parse (xml) {
+    const lines = this._extract(xml)
       .map(line => line.trim())
       .filter(line => line.length > 0)
 
