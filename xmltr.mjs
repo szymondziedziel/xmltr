@@ -160,24 +160,54 @@ class Node {
     this._renumber()
   }
 
-  after (nodes) {
+  after (node) {
     const { from, length } = this._findNodeRange()
-    this.nodes.splice(from + length, 0, nodes)
+    const currentNestingLevel = this.nodes[from].nestingLevel
+    if (node instanceof Nodes) {
+      node.nodes.forEach((node, index) => {
+        node.nestingLevel = index + currentNestingLevel
+      })
+      this.nodes.splice(from + length, 0, ...node.nodes)
+    } else {
+      node.nestingLevel = currentNestingLevel
+      this.nodes.splice(from + length, 0, node)
+    }
+    this._renumber()
   }
 
-  before (nodes) {
+  before (node) {
     const { from } = this._findNodeRange()
-    this.nodes.splice(from - 1, 0, nodes)
+    const currentNestingLevel = this.nodes[from].nestingLevel
+    if (node instanceof Nodes) {
+      node.nodes.forEach((node, index) => {
+        node.nestingLevel = index + currentNestingLevel
+      })
+      this.nodes.splice(from, 0, ...node.nodes)
+    } else {
+      node.nestingLevel = currentNestingLevel
+      this.nodes.splice(from, 0, node)
+    }
+    this._renumber()
   }
 
-  replace (nodes) {
+  replace (node) {
     const { from, length } = this._findNodeRange()
-    this.nodes.splice(from, length, nodes)
+    const currentNestingLevel = this.nodes[from].nestingLevel
+    if (node instanceof Nodes) {
+      node.nodes.forEach((node, index) => {
+        node.nestingLevel = index + currentNestingLevel
+      })
+      this.nodes.splice(from, length, ...node.nodes)
+    } else {
+      node.nestingLevel = currentNestingLevel
+      this.nodes.splice(from, length, node)
+    }
+    this._renumber()
   }
 
   _renumber () {
     for (let i = 0; i < this.nodes.length; i++) {
-      this.nodes[i].nodeIndex = i;
+      this.nodes[i].nodeIndex = i
     }
   }
 

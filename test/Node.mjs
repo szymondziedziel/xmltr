@@ -437,4 +437,139 @@ describe('Node', function () {
       )
     })
   })
+
+  describe('Replacing node in tree', function () {
+    it('Replace first-name with node', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const firstName = tree.byTags('student')[0].byTags('first-name')[0].children()[0]
+      const newFirstName = (new Node('Rick'))
+      firstName.replace(newFirstName)
+      assert.deepEqual(
+        tree.toArrayOfStrings(),
+        [
+          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
+          '[nodeDescription=[#text Rick] nodeIndex=[3] nestingLevel=[3]]',
+          '[nodeDescription=[last-name] nodeIndex=[4] nestingLevel=[2]]',
+          '[nodeDescription=[#text Doe] nodeIndex=[5] nestingLevel=[3]]'
+        ]
+      )
+    })
+
+    it('Replace first-name with tree', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const firstName = tree.byTags('student')[0].byTags('first-name')[0]
+      const newFirstName = (new Nodes('<first-name>Rick</first-name>'))
+      firstName.replace(newFirstName)
+      assert.deepEqual(
+        tree.toArrayOfStrings(),
+        [
+          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
+          '[nodeDescription=[#text Rick] nodeIndex=[3] nestingLevel=[3]]',
+          '[nodeDescription=[last-name] nodeIndex=[4] nestingLevel=[2]]',
+          '[nodeDescription=[#text Doe] nodeIndex=[5] nestingLevel=[3]]'
+        ]
+      )
+    })
+
+    it('Replace student with node', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const student = tree.byTags('student')[0]
+      const anything = (new Node('Test'))
+      student.replace(anything)
+      assert.deepEqual(
+        tree.toArrayOfStrings(),
+        [
+          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[#text Test] nodeIndex=[1] nestingLevel=[1]]',
+        ]
+      )
+    })
+  })
+
+  describe('Interting after node in tree', function () {
+    it('Insert middle-name after first-name with tree', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const firstName = tree.byTags('student')[0].byTags('first-name')[0]
+      const middleName = (new Nodes('<middle-name>Aron</middle-name>'))
+      firstName.after(middleName)
+      assert.deepEqual(
+        tree.toArrayOfStrings(),
+        [
+          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
+          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
+          '[nodeDescription=[middle-name] nodeIndex=[4] nestingLevel=[2]]',
+          '[nodeDescription=[#text Aron] nodeIndex=[5] nestingLevel=[3]]',
+          '[nodeDescription=[last-name] nodeIndex=[6] nestingLevel=[2]]',
+          '[nodeDescription=[#text Doe] nodeIndex=[7] nestingLevel=[3]]'
+        ]
+      )
+    })
+
+    it('Insert middle-name tag after first-name with node', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const firstName = tree.byTags('student')[0].byTags('first-name')[0]
+      const middleNameTag = (new Node('<middle-name>'))
+      firstName.after(middleNameTag)
+      assert.deepEqual(
+        tree.toArrayOfStrings(),
+        [
+          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
+          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
+          '[nodeDescription=[middle-name] nodeIndex=[4] nestingLevel=[2]]',
+          '[nodeDescription=[last-name] nodeIndex=[5] nestingLevel=[2]]',
+          '[nodeDescription=[#text Doe] nodeIndex=[6] nestingLevel=[3]]'
+        ]
+      )
+    })
+  })
+
+  describe('Interting before node in tree', function () {
+    it('Insert middle-name before last-name with tree', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const lastName = tree.byTags('student')[0].byTags('last-name')[0]
+      const middleName = (new Nodes('<middle-name>Aron</middle-name>'))
+      lastName.before(middleName)
+      assert.deepEqual(
+        tree.toArrayOfStrings(),
+        [
+          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
+          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
+          '[nodeDescription=[middle-name] nodeIndex=[4] nestingLevel=[2]]',
+          '[nodeDescription=[#text Aron] nodeIndex=[5] nestingLevel=[3]]',
+          '[nodeDescription=[last-name] nodeIndex=[6] nestingLevel=[2]]',
+          '[nodeDescription=[#text Doe] nodeIndex=[7] nestingLevel=[3]]'
+        ]
+      )
+    })
+
+    it('Insert middle-name tag before last-name with node', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const lastName = tree.byTags('student')[0].byTags('last-name')[0]
+      const middleNameTag = (new Node('<middle-name>'))
+      lastName.before(middleNameTag)
+      assert.deepEqual(
+        tree.toArrayOfStrings(),
+        [
+          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
+          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
+          '[nodeDescription=[middle-name] nodeIndex=[4] nestingLevel=[2]]',
+          '[nodeDescription=[last-name] nodeIndex=[5] nestingLevel=[2]]',
+          '[nodeDescription=[#text Doe] nodeIndex=[6] nestingLevel=[3]]'
+        ]
+      )
+    })
+  })
+
 })
