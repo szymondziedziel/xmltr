@@ -3,7 +3,7 @@ class Node {
     this.line = line
     this.nodeIndex = nodeIndex
     this.nestingLevel = nestingLevel
-    this.nodes = null
+    this.nodes = [this]
   }
 
   getAttr (...names) {
@@ -163,45 +163,37 @@ class Node {
   after (node) {
     const { from, length } = this._findNodeRange()
     const currentNestingLevel = this.nodes[from].nestingLevel
-    if (node instanceof Nodes) {
-      node.nodes.forEach((node, index) => {
-        node.nestingLevel = index + currentNestingLevel
-      })
-      this.nodes.splice(from + length, 0, ...node.nodes)
-    } else {
-      node.nestingLevel = currentNestingLevel
-      this.nodes.splice(from + length, 0, node)
-    }
-    this._renumber()
+    this._substituteFromLength(node, from + length, 0, currentNestingLevel)
   }
 
   before (node) {
     const { from } = this._findNodeRange()
     const currentNestingLevel = this.nodes[from].nestingLevel
-    if (node instanceof Nodes) {
-      node.nodes.forEach((node, index) => {
-        node.nestingLevel = index + currentNestingLevel
-      })
-      this.nodes.splice(from, 0, ...node.nodes)
-    } else {
-      node.nestingLevel = currentNestingLevel
-      this.nodes.splice(from, 0, node)
-    }
-    this._renumber()
+    this._substituteFromLength(node, from, 0, currentNestingLevel)
   }
 
   replace (node) {
     const { from, length } = this._findNodeRange()
     const currentNestingLevel = this.nodes[from].nestingLevel
-    if (node instanceof Nodes) {
-      node.nodes.forEach((node, index) => {
-        node.nestingLevel = index + currentNestingLevel
-      })
-      this.nodes.splice(from, length, ...node.nodes)
+    this._substituteFromLength(node, from, length, currentNestingLevel)
+  }
+
+  insertChild (node, index = 0) {
+    node.nodeIndex = this.nodeIndex + 1
+    node.nestingLevel = this.nestingLevel + 1
+    if (this.children().length === 0) {
+      this.nodes.splice(this.nodeIndex + 1, 0, node)
     } else {
-      node.nestingLevel = currentNestingLevel
-      this.nodes.splice(from, length, node)
+      this.children()[index].before(node)
     }
+    this._renumber()
+  }
+
+  _substituteFromLength (node, from, length, currentNestingLevel) {
+    node.nodes.forEach((node, index) => {
+      node.nestingLevel = index + currentNestingLevel
+    })
+    this.nodes.splice(from, length, ...node.nodes)
     this._renumber()
   }
 

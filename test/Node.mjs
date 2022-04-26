@@ -529,6 +529,28 @@ describe('Node', function () {
         ]
       )
     })
+
+    it('Insert middle-name tag after first-name with two node (using here insertChild)', function () {
+      const tree = new Nodes(SAMPLE_XML)
+      const firstName = tree.byTags('student')[0].byTags('first-name')[0]
+      const middleNameTag = (new Node('<middle-name>'))
+      const middleNameText = (new Node('Aron'))
+      middleNameTag.insertChild(middleNameText)
+      firstName.after(middleNameTag)
+      assert.deepEqual(
+        tree.toArrayOfStrings(),
+        [
+          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
+          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
+          '[nodeDescription=[middle-name] nodeIndex=[4] nestingLevel=[2]]',
+          '[nodeDescription=[#text Aron] nodeIndex=[5] nestingLevel=[3]]',
+          '[nodeDescription=[last-name] nodeIndex=[6] nestingLevel=[2]]',
+          '[nodeDescription=[#text Doe] nodeIndex=[7] nestingLevel=[3]]'
+        ]
+      )
+    })
   })
 
   describe('Interting before node in tree', function () {
