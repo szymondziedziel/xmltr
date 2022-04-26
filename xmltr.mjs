@@ -162,6 +162,7 @@ class Node {
 
   after (node) {
     const { from, length } = this._findNodeRange()
+    console.log(this, from, length, this.nodes)
     const currentNestingLevel = this.nodes[from].nestingLevel
     this._substituteFromLength(node, from + length, 0, currentNestingLevel)
   }
@@ -178,11 +179,16 @@ class Node {
     this._substituteFromLength(node, from, length, currentNestingLevel)
   }
 
-  insertChild (node, index = 0) {
+  insertChild (node, index = -1) {
+    if (index === -1) {
+      index = this.children().length
+    }
     node.nodeIndex = this.nodeIndex + 1
     node.nestingLevel = this.nestingLevel + 1
-    if (this.children().length === 0) {
+    if (index === 0) {
       this.nodes.splice(this.nodeIndex + 1, 0, node)
+    } else if (index === this.children().length) {
+      this.children()[index - 1].after(node)
     } else {
       this.children()[index].before(node)
     }

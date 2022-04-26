@@ -594,4 +594,76 @@ describe('Node', function () {
     })
   })
 
+  describe('Inserting children', function () {
+    it('Create node and add child', function () {
+      const tag = (new Node('<tag>'))
+      const tagContent = (new Node('tag content'))
+      tag.insertChild(tagContent)
+      assert.deepEqual(
+        tag.nodes.map(node => node.toString()),
+        [
+          '[nodeDescription=[tag] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[#text tag content] nodeIndex=[1] nestingLevel=[1]]',
+        ]
+      )
+    })
+
+    it('Create node and add three children', function () {
+      const parent = (new Node('<parent>'))
+      const child1 = (new Node('<child1>'))
+      const child2 = (new Node('<child2>'))
+      const child3 = (new Node('<child3>'))
+      parent.insertChild(child1)
+      parent.insertChild(child2)
+      parent.insertChild(child3)
+      assert.deepEqual(
+        parent.nodes.map(node => node.toString()),
+        [
+          '[nodeDescription=[parent] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[child1] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[child2] nodeIndex=[2] nestingLevel=[1]]',
+          '[nodeDescription=[child3] nodeIndex=[3] nestingLevel=[1]]',
+        ]
+      )
+    })
+
+    it('Create node and add three children but in different order', function () {
+      const parent = (new Node('<parent>'))
+      const child1 = (new Node('<child1>'))
+      const child2 = (new Node('<child2>'))
+      const child3 = (new Node('<child3>'))
+      parent.insertChild(child1)
+      parent.insertChild(child3)
+      parent.insertChild(child2)
+      assert.deepEqual(
+        parent.nodes.map(node => node.toString()),
+        [
+          '[nodeDescription=[parent] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[child1] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[child3] nodeIndex=[2] nestingLevel=[1]]',
+          '[nodeDescription=[child2] nodeIndex=[3] nestingLevel=[1]]',
+        ]
+      )
+    })
+
+    it('Create tree from node using insertChild', function () {
+      const parent1 = (new Node('<parent>'))
+      const child1 = (new Node('<child1>'))
+      const parent2 = (new Node('<child2>'))
+      const child2 = (new Node('<child3>'))
+      parent1.insertChild(child1)
+      parent2.insertChild(child2)
+      parent1.insertChild(parent2)
+      assert.deepEqual(
+        parent.nodes.map(node => node.toString()),
+        [
+          '[nodeDescription=[parent] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[child1] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[parent2] nodeIndex=[2] nestingLevel=[1]]',
+          '[nodeDescription=[child2] nodeIndex=[3] nestingLevel=[2]]',
+        ]
+      )
+    })
+  })
+
 })
