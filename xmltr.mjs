@@ -1,9 +1,26 @@
-class Node {
-  constructor (line, nodeIndex = 0, nestingLevel = 0) {
-    this.line = line
-    this.nodeIndex = nodeIndex
-    this.nestingLevel = nestingLevel
-    this.nodes = [this]
+// class N {
+//   constructor (line, nodeIndex = 0, nestingLevel = 0) {
+//     this.line = line
+//     this.nodeIndex = nodeIndex
+//     this.nestingLevel = nestingLevel
+//     this.nodes = [this]
+//   }
+// }
+
+class Xmltr {
+  constructor (data, range) {
+    if (typeof data === 'string') {
+      this.nodes = this._parse(data)
+    } else if (Array.isArray(data)) {
+      this.nodes = data
+    } else {
+      throw Error('Invalid data passed to Nodes constructor')
+    }
+    this.range = range || { from: 0, to: this.nodes.length }
+  }
+
+  static fromNode (xmltr, node) {
+    return new Xmltr(xmltr.nodes, { from: node.nodeIndex, to: node.nodeIndex + 1 })
   }
 
   getAttr (...names) {
@@ -93,34 +110,57 @@ class Node {
   }
 
   byAttrsVals (...filters) {
+    // return this._searchNodesSubset()
+    //   .filter(node => filters
+    //     .map(filter => {
+    //       const [filterAttrName, filterAttrValue] = filter.split('=')
+    //         .map(elem => elem.replaceAll('"', ''))
+    //       return node.getMultiAttr(filterAttrName).includes(filterAttrValue)
+    //     })
+    //     .find(filterMatches => filterMatches === true) !== undefined)
     return this._searchNodesSubset()
-      .filter(node => filters
-        .map(filter => {
-          const [filterAttrName, filterAttrValue] = filter.split('=')
-            .map(elem => elem.replaceAll('"', ''))
-          return node.getMultiAttr(filterAttrName).includes(filterAttrValue)
-        })
-        .find(filterMatches => filterMatches === true) !== undefined)
+      .filter(node => filters.map(f => node.line.indexOf(` ${f}`) > 0).find(e => e === true))
+      .map(node => Xmltr.fromNode(this, node))
+  }
+
+  _tagDesc () {
+    this._throwErrorWhenNotSingleTagNode()
+    const nodeParts = this._nodeDescription()
+      .match(/[a-zA-Z0-9-_]+="[^"]+"|[a-zA-Z0-9-_]+/g) || []
+    const tagName = nodeParts.shift()
+    const attrs = nodeParts.reduce((result, attrVal) => {
+      let [name, value] = attrVal.split('="')
+      value = value.substring(0, value.length - 1)
+      result[name] = value
+      return result
+    }, {})
+
+    return { tagName, attrs }
   }
 
   byTags (...tags) {
-    return this._searchNodesSubset().filter(node => tags.includes(node.tagName()))
+    return this._searchNodesSubset()
+      .filter(node => tags.includes(Xmltr.fromNode(this, node).tagName()))
+      .map(node => Xmltr.fromNode(this, node))
   }
 
   byAttrs (...filters) {
+    // return this._searchNodesSubset()
+    //   .filter(node => filters
+    //     .map(filter => Xmltr.fromNode(this, node).getAttr(filter) !== undefined)
+    //     .find(filterMatches => filterMatches === true) !== undefined)
     return this._searchNodesSubset()
-      .filter(node => filters
-        .map(filter => node.getAttr(filter) !== undefined)
-        .find(filterMatches => filterMatches === true) !== undefined)
+      .filter(node => filters.map(f => node.line.indexOf(` ${f}`) > 0).find(e => e === true))
+      .map(node => Xmltr.fromNode(this, node))
   }
 
   _searchNodesSubset () {
-    const { from, length } = this._findNodeRange()
-    return this.nodes.slice(from, from + length)
+    const { from, to } = this.range
+    return this.nodes.slice(from, to)
   }
 
   tagNodeArrayDescription (name) {
-    this._throwErrorWhenTextNode()
+    this._throwErrorWhenNotSingleTagNode()
     const nodeParts = this._nodeDescription()
       .match(/[a-zA-Z0-9-_]+="[^"]+"|[a-zA-Z0-9-_]+/g) || []
     const [tagName, ...attrs] = nodeParts
@@ -210,7 +250,7 @@ class Node {
   }
 
   tagName () {
-    return this._nodeDescription().split(' ')[0]
+    return this._tagDesc().tagName
   }
 
   parent () {
@@ -266,10 +306,6 @@ class Node {
     return this._nodeDescription()[0] === '#'
   }
 
-  toString () {
-    return `[nodeDescription=[${this._nodeDescription()}] nodeIndex=[${this.nodeIndex}] nestingLevel=[${this.nestingLevel}]]`
-  }
-
   _findNodeRange () {
     const from = this.nodeIndex
     let length = 1
@@ -297,29 +333,16 @@ class Node {
     return JSON.parse(JSON.stringify({ line, nodeIndex, nestingLevel }))
   }
 
-  _nodeDescription () {
-    if (this.line[0] === '<') {
-      return this.line.substr(1, this.line.length - 2)
+  _throwErrorWhenNotSingleNode () {
+    if (this.range.to - this.range.from !== 1) {
+      throw Error('Xmltr points at many nodes, not a single node')
     }
-
-    return `#text ${this.line}`
   }
 
-  _throwErrorWhenTextNode () {
+  _throwErrorWhenNotSingleTagNode () {
+    this._throwErrorWhenNotSingleNode()
     if (this.isTextNode()) {
       throw Error('Accessing tag in text node')
-    }
-  }
-}
-
-class Nodes {
-  constructor (data) {
-    if (typeof data === 'string') {
-      this.nodes = this._parse(data)
-    } else if (Array.isArray(data)) {
-      this.nodes = data
-    } else {
-      throw Error('Invalid data passed to Nodes constructor')
     }
   }
 
@@ -327,32 +350,24 @@ class Nodes {
     return this.nodes[0]
   }
 
-  byAttrsVals (...filters) {
-    return this.nodes.filter(node => {
-      const nodeParts = node._nodeDescription().match(/[a-zA-Z-_]+="[^"]+"/g) || []
-      return (new Set([...filters, ...nodeParts])).size === nodeParts.length
-    })
-  };
+  // byAttrsVals (...filters) {
+  //   return this.nodes.filter(node => {
+  //     const nodeParts = node._nodeDescription().match(/[a-zA-Z-_]+="[^"]+"/g) || []
+  //     return (new Set([...filters, ...nodeParts])).size === nodeParts.length
+  //   })
+  // };
 
-  byTags (...tags) {
-    return this.nodes.filter(node => tags.includes(node.tagName()))
-  }
+  // byTags (...tags) {
+  //   return this.nodes.filter(node => tags.includes(node.tagName()))
+  // }
 
-  byAttrs (...filters) {
-    return this.nodes.filter(node => {
-      const attrs = (node._nodeDescription().match(/[a-zA-Z-_]+="[^"]+"|[a-zA-Z-_]+/g) || []).map(attrVal => attrVal.split('=')[0])
-      attrs.shift()
-      return (new Set([...filters, ...attrs])).size === attrs.length
-    })
-  }
-
-  toArrayOfStrings () {
-    return this.nodes.map(node => node.toString())
-  }
-
-  toString () {
-    return `[\n${this.toArrayOfStrings()}\n]`
-  }
+  // byAttrs (...filters) {
+  //   return this.nodes.filter(node => {
+  //     const attrs = (node._nodeDescription().match(/[a-zA-Z-_]+="[^"]+"|[a-zA-Z-_]+/g) || []).map(attrVal => attrVal.split('=')[0])
+  //     attrs.shift()
+  //     return (new Set([...filters, ...attrs])).size === attrs.length
+  //   })
+  // }
 
   _extract (xml) {
     const nodes = []
@@ -391,12 +406,12 @@ class Nodes {
 
     lines.forEach(line => {
       if (line[line.length - 2] === '/') {
-        nodes.push(new Node(line, nodeIndex, nestingLevel))
+        nodes.push({ line, nodeIndex, nestingLevel })
         nodeIndex++
       } else if (line[1] === '/') {
         nestingLevel--
       } else {
-        nodes.push(new Node(line, nodeIndex, nestingLevel))
+        nodes.push({ line, nodeIndex, nestingLevel })
         if (line[0] === '<') {
           nestingLevel++
         }
@@ -408,6 +423,27 @@ class Nodes {
 
     return nodes
   }
+
+  // toString () {
+  //   return `[\n${this.toArrayOfStrings()}\n]`
+  // }
+
+  _nodeDescription (node) {
+    const current = node || this.nodes[this.range.from]
+    if (current.line[0] === '<') {
+      return current.line.substr(1, current.line.length - 2)
+    }
+
+    return `#text ${current.line}`
+  }
+
+  toString () {
+    const results = this.nodes.slice(this.range.from, this.range.to).map(node => {
+      return `[nodeDescription=[${this._nodeDescription(node)}] nodeIndex=[${node.nodeIndex}] nestingLevel=[${node.nestingLevel}]]`
+    })
+
+    return results.length === 1 ? results[0] : results
+  }
 }
 
-export { Node, Nodes }
+export { Xmltr }
