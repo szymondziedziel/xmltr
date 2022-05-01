@@ -46,7 +46,7 @@ class Xmltr {
       throw new NoAttributeNameProvided('Node::getMultiAttr requires at least one attribute name')
     }
     if (names.map(name => typeof name === 'string').includes(false)) {
-      throw new WrongAttributeNameTypeProvided('Node::getAttr requires all names to be strings')
+      throw new WrongAttributeNameTypeProvided('Node::getMultiAttr requires all names to be strings')
     }
 
     const nameValues = names
@@ -60,8 +60,12 @@ class Xmltr {
 
   rmAttr (...names) {
     if (names.length < 1) {
-      throw new Error('Node:rmAttr requires at least one attribute name')
+      throw new NoAttributeNameProvided('Node:rmAttr requires at least one attribute name')
     }
+    if (names.map(name => typeof name === 'string').includes(false)) {
+      throw new WrongAttributeNameTypeProvided('Node::rmAttr requires all names to be strings')
+    }
+
     const nameValues = names.map(name => {
       const { tagName, attrIndex, attrs, attrName } = this._tagNodeArrayDescription(name).first
 
@@ -79,7 +83,10 @@ class Xmltr {
 
   rmMultiAttr (...names) {
     if (names.length < 1) {
-      throw new Error('Node:rmMultiAttr requires at least one attribute name')
+      throw new NoAttributeNameProvided('Node:rmMultiAttr requires at least one attribute name')
+    }
+    if (names.map(name => typeof name === 'string').includes(false)) {
+      throw new WrongAttributeNameTypeProvided('Node::rmMultiAttr requires all names to be strings')
     }
 
     const attrsIndexes = names
@@ -123,21 +130,6 @@ class Xmltr {
     this.selfShallow().line = `<${tagName} ${attrs.join(' ')}>`
   }
 
-  _tagDesc () {
-    this._throwErrorWhenNotSingleTagNode()
-    const nodeParts = this._nodeDescription()
-      .match(/[a-zA-Z0-9-_]+="[^"]+"|[a-zA-Z0-9-_]+/g) || []
-    const tagName = nodeParts.shift()
-    const attrs = nodeParts.reduce((result, attrVal) => {
-      let [name, value] = attrVal.split('="')
-      value = value !== undefined ? value.substring(0, value.length - 1) : undefined
-      result[name] = value
-      return result
-    }, {})
-
-    return { tagName, attrs }
-  }
-
   byTags (...tags) {
     this.parentObjects.push(this)
     return this.selfDeep()
@@ -157,6 +149,21 @@ class Xmltr {
     return this.selfDeep()
       .filter(node => filters.map(f => node.line.indexOf(` ${f}`) > 0).find(e => e === true))
       .map(node => Xmltr.fromNode(this, node))
+  }
+
+  _tagDesc () {
+    this._throwErrorWhenNotSingleTagNode()
+    const nodeParts = this._nodeDescription()
+      .match(/[a-zA-Z0-9-_]+="[^"]+"|[a-zA-Z0-9-_]+/g) || []
+    const tagName = nodeParts.shift()
+    const attrs = nodeParts.reduce((result, attrVal) => {
+      let [name, value] = attrVal.split('="')
+      value = value !== undefined ? value.substring(0, value.length - 1) : undefined
+      result[name] = value
+      return result
+    }, {})
+
+    return { tagName, attrs }
   }
 
   _tagNodeArrayDescription (name) {
@@ -292,19 +299,6 @@ class Xmltr {
     return this._nodeDescription()[0] === '#'
   }
 
-  selfRange () {
-    const from = this.range.from
-    let length = 1
-    for (let i = from + 1; i < this.nodes.length; i++) {
-      if (this.nodes[i].depth > this.selfShallow().depth) {
-        length++
-      } else {
-        break
-      }
-    }
-    return { from, length }
-  }
-
   _throwErrorWhenNotSingleNode () {
     return
     if (this.range.to - this.range.from !== 1) {
@@ -321,29 +315,7 @@ class Xmltr {
   }
 
   _extract (xml) {
-    const nodes = []
-    let node = ''
-    for (let i = 0; i < xml.length; i++) {
-      let tagStarted = false
-      const char = xml[i]
-      if (char === '<') {
-        nodes.push(node)
-        node = '<'
-        if (tagStarted) {
-          throw new Error(`Invalid open tag character at ${i}`)
-        }
-        tagStarted = true
-      } else if (char === '>') {
-        node += char
-        nodes.push(node)
-        node = ''
-        tagStarted = false
-      } else {
-        node += char
-      }
-    }
-    nodes.push(node)
-    return nodes
+    return xml.replaceAll('<', '&xmltr;<').replaceAll('>', '>&xmltr;').split('&xmltr;')
   }
 
   _parse (xml) {
@@ -392,6 +364,14 @@ class Xmltr {
     return results.length === 1 ? results[0] : results
   }
 
+  toStringDebug () {
+    const results = this.nodes.slice(this.range.from, this.range.to).map(node => {
+      return `[nodeDescription=[${Xmltr.fromNode(this, node)._nodeDescription()}] index=[${node.index}] depth=[${node.depth}] t=[${node.t}]]`
+    })
+
+    return results.length === 1 ? results[0] : results
+  }
+
   selfShallow () {
     return this.nodes[this.range.from]
   }
@@ -399,6 +379,19 @@ class Xmltr {
   selfDeep () {
     const { from, length } = this.selfRange()
     return this.nodes.slice(from, from + length)
+  }
+
+  selfRange () {
+    const from = this.range.from
+    let length = 1
+    for (let i = from + 1; i < this.nodes.length; i++) {
+      if (this.nodes[i].depth > this.selfShallow().depth) {
+        length++
+      } else {
+        break
+      }
+    }
+    return { from, length }
   }
 }
 
