@@ -1,3 +1,17 @@
+class NoAttributeNameProvided extends Error {
+  constructor (message) {
+    super(message)
+    this.name = 'NoAttributeNameProvided'
+  }
+}
+
+class WrongAttributeNameTypeProvided extends Error {
+  constructor (message) {
+    super(message)
+    this.name = 'WrongAttributeNameTypeProvided'
+  }
+}
+
 class Xmltr {
   constructor (data, range, parentObjects) {
     if (typeof data === 'string') {
@@ -5,7 +19,7 @@ class Xmltr {
     } else if (Array.isArray(data)) {
       this.nodes = data
     } else {
-      throw Error('Invalid data passed to Nodes constructor')
+      throw new Error('Invalid data passed to Nodes constructor')
     }
     this.range = range || { from: 0, to: this.nodes.length }
     this.parentObjects = parentObjects || []
@@ -17,16 +31,24 @@ class Xmltr {
 
   getAttr (...names) {
     if (names.length < 1) {
-      throw Error('Node::getAttr requires at least one attribute name')
+      throw new NoAttributeNameProvided('Node::getAttr requires at least one attribute name')
     }
+    if (names.map(name => typeof name === 'string').includes(false)) {
+      throw new WrongAttributeNameTypeProvided('Node::getAttr requires all names to be strings')
+    }
+
     const values = names.map(name => this._tagNodeArrayDescription(name).first.attrValue)
     return values.length > 1 ? values : values[0]
   }
 
   getMultiAttr (...names) {
     if (names.length < 1) {
-      throw Error('Node::getMultiAttr requires at least one attribute name')
+      throw new NoAttributeNameProvided('Node::getMultiAttr requires at least one attribute name')
     }
+    if (names.map(name => typeof name === 'string').includes(false)) {
+      throw new WrongAttributeNameTypeProvided('Node::getAttr requires all names to be strings')
+    }
+
     const nameValues = names
       .map(name =>
         this._tagNodeArrayDescription(name).all.attrsValues.map(av => av[1])
@@ -38,7 +60,7 @@ class Xmltr {
 
   rmAttr (...names) {
     if (names.length < 1) {
-      throw Error('Node:rmAttr requires at least one attribute name')
+      throw new Error('Node:rmAttr requires at least one attribute name')
     }
     const nameValues = names.map(name => {
       const { tagName, attrIndex, attrs, attrName } = this._tagNodeArrayDescription(name).first
@@ -57,7 +79,7 @@ class Xmltr {
 
   rmMultiAttr (...names) {
     if (names.length < 1) {
-      throw Error('Node:rmMultiAttr requires at least one attribute name')
+      throw new Error('Node:rmMultiAttr requires at least one attribute name')
     }
 
     const attrsIndexes = names
@@ -286,7 +308,7 @@ class Xmltr {
   _throwErrorWhenNotSingleNode () {
     return
     if (this.range.to - this.range.from !== 1) {
-      throw Error('Xmltr points at many nodes, not a single node')
+      throw new Error('Xmltr points at many nodes, not a single node')
     }
   }
 
@@ -294,7 +316,7 @@ class Xmltr {
     return
     this._throwErrorWhenNotSingleNode()
     if (this.isTextNode()) {
-      throw Error('Accessing tag in text node')
+      throw new Error('Accessing tag in text node')
     }
   }
 
@@ -308,7 +330,7 @@ class Xmltr {
         nodes.push(node)
         node = '<'
         if (tagStarted) {
-          throw Error(`Invalid open tag character at ${i}`)
+          throw new Error(`Invalid open tag character at ${i}`)
         }
         tagStarted = true
       } else if (char === '>') {
@@ -378,6 +400,11 @@ class Xmltr {
     const { from, length } = this.selfRange()
     return this.nodes.slice(from, from + length)
   }
+}
+
+Xmltr.Errors = {
+  NoAttributeNameProvided,
+  WrongAttributeNameTypeProvided
 }
 
 export { Xmltr }
