@@ -26,7 +26,7 @@ class Xmltr {
   }
 
   static fromNode (xmltr, node) {
-    return new Xmltr(xmltr.nodes, { from: node.nodeIndex, to: node.nodeIndex + 1 }, xmltr.parentObjects)
+    return new Xmltr(xmltr.nodes, { from: node.index, to: node.index + 1 }, xmltr.parentObjects)
   }
 
   getAttr (...names) {
@@ -202,29 +202,29 @@ class Xmltr {
 
   after (node) {
     const { from, length } = this.selfRange()
-    const currentNestingLevel = this.nodes[from].nestingLevel
+    const currentNestingLevel = this.nodes[from].depth
     this._substituteFromLength(node, from + length, 0, currentNestingLevel)
   }
 
   before (node) {
     const { from } = this.selfRange()
-    const currentNestingLevel = this.nodes[from].nestingLevel
+    const currentNestingLevel = this.nodes[from].depth
     this._substituteFromLength(node, from, 0, currentNestingLevel)
   }
 
   replace (node) {
     const { from, length } = this.selfRange()
-    const currentNestingLevel = this.nodes[from].nestingLevel
+    const currentNestingLevel = this.nodes[from].depth
     this._substituteFromLength(node, from, length, currentNestingLevel)
   }
 
-  insertChild (node, index = -1) {
-    index = index === -1 ? this.children().length : index
+  insertChild (node, atIndex = -1) {
+    atIndex = atIndex === -1 ? this.children().length : atIndex
     const current = this.selfShallow()
-    const { nodeIndex, nestingLevel } = current
-    this.nodes.splice(nodeIndex + index + 1, 0, ...node.nodes)
+    const { index, depth } = current
+    this.nodes.splice(index + atIndex + 1, 0, ...node.nodes)
     node.nodes.forEach(node => {
-      node.nestingLevel += nestingLevel + 1
+      node.depth += depth + 1
     })
     this.range = this.selfRange()
     this._renumber()
@@ -232,7 +232,7 @@ class Xmltr {
 
   _substituteFromLength (node, from, length, currentNestingLevel) {
     node.nodes.forEach((node, index) => {
-      node.nestingLevel = node.nestingLevel + currentNestingLevel
+      node.depth = node.depth + currentNestingLevel
     })
     this.nodes.splice(from, length, ...node.nodes)
     this._renumber()
@@ -240,7 +240,7 @@ class Xmltr {
 
   _renumber () {
     for (let i = 0; i < this.nodes.length; i++) {
-      this.nodes[i].nodeIndex = i
+      this.nodes[i].index = i
     }
     this.parentObjects.forEach(obj => { obj.range = obj.selfRange() })
   }
@@ -250,9 +250,9 @@ class Xmltr {
   }
 
   parent () {
-    const { nodeIndex, nestingLevel } = this.selfShallow()
-    for (let i = nodeIndex; i > -1; i--) {
-      if (this.nodes[i].nestingLevel === nestingLevel - 1) {
+    const { index, depth } = this.selfShallow()
+    for (let i = index; i > -1; i--) {
+      if (this.nodes[i].depth === depth - 1) {
         return Xmltr.fromNode(this, this.nodes[i])
       }
     }
@@ -278,9 +278,9 @@ class Xmltr {
   }
 
   children () {
-    const { nestingLevel } = this.selfShallow()
+    const { depth } = this.selfShallow()
     return this.selfDeep()
-      .filter(node => node.nestingLevel === nestingLevel + 1)
+      .filter(node => node.depth === depth + 1)
       .map(node => Xmltr.fromNode(this, node))
   }
 
@@ -296,7 +296,7 @@ class Xmltr {
     const from = this.range.from
     let length = 1
     for (let i = from + 1; i < this.nodes.length; i++) {
-      if (this.nodes[i].nestingLevel > this.selfShallow().nestingLevel) {
+      if (this.nodes[i].depth > this.selfShallow().depth) {
         length++
       } else {
         break
@@ -351,22 +351,22 @@ class Xmltr {
       .map(line => line.trim())
       .filter(line => line.length > 0)
 
-    let nodeIndex = 0
-    let nestingLevel = 0
+    let index = 0
+    let depth = 0
     const nodes = []
 
     lines.forEach(line => {
       if (line[line.length - 2] === '/') {
-        nodes.push({ line, nodeIndex, nestingLevel })
-        nodeIndex++
+        nodes.push({ line, index, depth })
+        index++
       } else if (line[1] === '/') {
-        nestingLevel--
+        depth--
       } else {
-        nodes.push({ line, nodeIndex, nestingLevel })
+        nodes.push({ line, index, depth })
         if (line[0] === '<') {
-          nestingLevel++
+          depth++
         }
-        nodeIndex++
+        index++
       }
     })
 
@@ -386,7 +386,7 @@ class Xmltr {
 
   toString () {
     const results = this.nodes.slice(this.range.from, this.range.to).map(node => {
-      return `[nodeDescription=[${Xmltr.fromNode(this, node)._nodeDescription()}] nodeIndex=[${node.nodeIndex}] nestingLevel=[${node.nestingLevel}]]`
+      return `[nodeDescription=[${Xmltr.fromNode(this, node)._nodeDescription()}] index=[${node.index}] depth=[${node.depth}]]`
     })
 
     return results.length === 1 ? results[0] : results

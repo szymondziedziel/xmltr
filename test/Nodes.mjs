@@ -18,9 +18,9 @@ describe('Xmltr', function () {
       assert.deepEqual(
         (new Xmltr('<p><c /><c></c></p>')).toString(),
         [
-          '[nodeDescription=[p] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[c /] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[c] nodeIndex=[2] nestingLevel=[1]]'
+          '[nodeDescription=[p] index=[0] depth=[0]]',
+          '[nodeDescription=[c /] index=[1] depth=[1]]',
+          '[nodeDescription=[c] index=[2] depth=[1]]'
         ]
       )
     })
@@ -29,10 +29,10 @@ describe('Xmltr', function () {
       assert.deepEqual(
         (new Xmltr('<p><c>test text</c><c /></p>')).toString(),
         [
-          '[nodeDescription=[p] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[c] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[#text test text] nodeIndex=[2] nestingLevel=[2]]',
-          '[nodeDescription=[c /] nodeIndex=[3] nestingLevel=[1]]'
+          '[nodeDescription=[p] index=[0] depth=[0]]',
+          '[nodeDescription=[c] index=[1] depth=[1]]',
+          '[nodeDescription=[#text test text] index=[2] depth=[2]]',
+          '[nodeDescription=[c /] index=[3] depth=[1]]'
         ]
       )
     })
@@ -41,12 +41,12 @@ describe('Xmltr', function () {
       assert.deepEqual(
         (new Xmltr('<persons><student><first-name>John</first-name><last-name>Doe</last-name></student></persons>')).toString(),
         [
-          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
-          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
-          '[nodeDescription=[last-name] nodeIndex=[4] nestingLevel=[2]]',
-          '[nodeDescription=[#text Doe] nodeIndex=[5] nestingLevel=[3]]'
+          '[nodeDescription=[persons] index=[0] depth=[0]]',
+          '[nodeDescription=[student] index=[1] depth=[1]]',
+          '[nodeDescription=[first-name] index=[2] depth=[2]]',
+          '[nodeDescription=[#text John] index=[3] depth=[3]]',
+          '[nodeDescription=[last-name] index=[4] depth=[2]]',
+          '[nodeDescription=[#text Doe] index=[5] depth=[3]]'
         ]
       )
     })
@@ -54,7 +54,7 @@ describe('Xmltr', function () {
     it('Should find p by tag', function () {
       assert.deepEqual(
         (new Xmltr('<p><c /><c></c></p>')).byTags('p')[0].toString(),
-        '[nodeDescription=[p] nodeIndex=[0] nestingLevel=[0]]'
+        '[nodeDescription=[p] index=[0] depth=[0]]'
       )
     })
 
@@ -62,8 +62,8 @@ describe('Xmltr', function () {
       assert.deepEqual(
         (new Xmltr('<p><c /><c></c></p>')).byTags('c').map(node => node.toString()),
         [
-          '[nodeDescription=[c /] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[c] nodeIndex=[2] nestingLevel=[1]]'
+          '[nodeDescription=[c /] index=[1] depth=[1]]',
+          '[nodeDescription=[c] index=[2] depth=[1]]'
         ]
       )
     })
@@ -72,7 +72,7 @@ describe('Xmltr', function () {
       assert.deepEqual(
         (new Xmltr('<p><c enabled="true"/><c></c></p>')).byAttrs('enabled').map(node => node.toString()),
         [
-          '[nodeDescription=[c enabled="true"/] nodeIndex=[1] nestingLevel=[1]]'
+          '[nodeDescription=[c enabled="true"/] index=[1] depth=[1]]'
         ]
       )
     })
@@ -81,7 +81,7 @@ describe('Xmltr', function () {
       assert.deepEqual(
         (new Xmltr('<p><c enabled="true"/><c></c></p>')).byAttrsVals('enabled="true"').map(node => node.toString()),
         [
-          '[nodeDescription=[c enabled="true"/] nodeIndex=[1] nestingLevel=[1]]'
+          '[nodeDescription=[c enabled="true"/] index=[1] depth=[1]]'
         ]
       )
     })
@@ -90,7 +90,7 @@ describe('Xmltr', function () {
       assert.deepEqual(
         (new Xmltr('<p><c enabled/><c></c></p>')).byAttrs('enabled').map(node => node.toString()),
         [
-          '[nodeDescription=[c enabled/] nodeIndex=[1] nestingLevel=[1]]'
+          '[nodeDescription=[c enabled/] index=[1] depth=[1]]'
         ]
       )
     })
@@ -99,7 +99,7 @@ describe('Xmltr', function () {
       assert.deepEqual(
         (new Xmltr('<p><c enabled="true"/><c></c></p>')).byAttrsVals('enabled="true"').map(node => node.toString()),
         [
-          '[nodeDescription=[c enabled="true"/] nodeIndex=[1] nestingLevel=[1]]'
+          '[nodeDescription=[c enabled="true"/] index=[1] depth=[1]]'
         ]
       )
     })
@@ -108,8 +108,8 @@ describe('Xmltr', function () {
       assert.deepEqual(
         (new Xmltr('<p><c enabled="true" /><c enabled="false"></c></p>')).byAttrs('enabled').map(node => node.toString()),
         [
-          '[nodeDescription=[c enabled="true" /] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[c enabled="false"] nodeIndex=[2] nestingLevel=[1]]'
+          '[nodeDescription=[c enabled="true" /] index=[1] depth=[1]]',
+          '[nodeDescription=[c enabled="false"] index=[2] depth=[1]]'
         ]
       )
     })

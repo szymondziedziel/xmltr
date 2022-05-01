@@ -9,54 +9,54 @@ describe('Xmltr', function () {
     it('Should create appropriate object', function () {
       assert.equal(
         (new Xmltr('<a>')).toString(),
-        '[nodeDescription=[a] nodeIndex=[0] nestingLevel=[0]]'
+        '[nodeDescription=[a] index=[0] depth=[0]]'
       )
       assert.equal(
         (new Xmltr('<a>', 0)).toString(),
-        '[nodeDescription=[a] nodeIndex=[0] nestingLevel=[0]]'
+        '[nodeDescription=[a] index=[0] depth=[0]]'
       )
       assert.equal(
         (new Xmltr('<a>')).toString(),
-        '[nodeDescription=[a] nodeIndex=[0] nestingLevel=[0]]'
+        '[nodeDescription=[a] index=[0] depth=[0]]'
       )
     })
   })
 
-  describe('Basic functions (helpers/ private)', function() {
+  describe('Basic functions (helpers/ private)', function () {
 
-    it('Self range is only a helper and it should return range from, length occupied within all nodes', function() {
+    it('Self range is only a helper and it should return range from, length occupied within all nodes', function () {
       const tree = new Xmltr(SAMPLE_XML)
       assert.deepEqual(tree.selfRange(), { from: 0, length: 6 })
     })
 
-    it('Self deep is only a helper and it should return self with all descentants', function() {
+    it('Self deep is only a helper and it should return self with all descentants', function () {
       const tree = new Xmltr(SAMPLE_XML)
       assert.equal(tree.selfDeep().length, 6)
 
       assert.deepEqual(
         tree.selfDeep().map(node => Xmltr.fromNode(tree, node).toString()),
         [
-          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
-          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
-          '[nodeDescription=[last-name] nodeIndex=[4] nestingLevel=[2]]',
-          '[nodeDescription=[#text Doe] nodeIndex=[5] nestingLevel=[3]]'
+          '[nodeDescription=[persons] index=[0] depth=[0]]',
+          '[nodeDescription=[student] index=[1] depth=[1]]',
+          '[nodeDescription=[first-name] index=[2] depth=[2]]',
+          '[nodeDescription=[#text John] index=[3] depth=[3]]',
+          '[nodeDescription=[last-name] index=[4] depth=[2]]',
+          '[nodeDescription=[#text Doe] index=[5] depth=[3]]'
         ]
       )
 
     })
 
-    it('Self shallow is only a helper and it should requrn single raw node object', function() {
+    it('Self shallow is only a helper and it should requrn single raw node object', function () {
       const tree = new Xmltr(SAMPLE_XML)
       const lastName = tree.byTags('last-name')[0]
       assert.equal(
         Xmltr.fromNode(tree, tree.selfShallow()).toString(),
-        '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]'
+        '[nodeDescription=[persons] index=[0] depth=[0]]'
       )
       assert.equal(
         lastName.toString(),
-        '[nodeDescription=[last-name] nodeIndex=[4] nestingLevel=[2]]'
+        '[nodeDescription=[last-name] index=[4] depth=[2]]'
       )
     })
   })
@@ -323,7 +323,7 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tree.children().map(node => node.toString()),
         [
-          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]'
+          '[nodeDescription=[student] index=[1] depth=[1]]'
         ]
       )
     })
@@ -333,8 +333,8 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tree.children()[0].children().map(node => node.toString()),
         [
-          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
-          '[nodeDescription=[last-name] nodeIndex=[4] nestingLevel=[2]]'
+          '[nodeDescription=[first-name] index=[2] depth=[2]]',
+          '[nodeDescription=[last-name] index=[4] depth=[2]]'
         ]
       )
     })
@@ -344,7 +344,7 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tree.children()[0].children()[0].children().map(node => node.toString()),
         [
-          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]'
+          '[nodeDescription=[#text John] index=[3] depth=[3]]'
         ]
       )
     })
@@ -371,11 +371,11 @@ describe('Xmltr', function () {
       const student = tree.byTags('student')[0]
       assert.equal(
         student.children()[0].parent().toString(),
-        '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]'
+        '[nodeDescription=[student] index=[1] depth=[1]]'
       )
       assert.equal(
         student.children()[1].parent().toString(),
-        '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]'
+        '[nodeDescription=[student] index=[1] depth=[1]]'
       )
     })
 
@@ -384,7 +384,7 @@ describe('Xmltr', function () {
       const firstName = tree.byTags('student')[0].children()[0]
       assert.equal(
         firstName.next().toString(),
-        '[nodeDescription=[last-name] nodeIndex=[4] nestingLevel=[2]]'
+        '[nodeDescription=[last-name] index=[4] depth=[2]]'
       )
     })
 
@@ -393,7 +393,7 @@ describe('Xmltr', function () {
       const lastName = tree.byTags('student')[0].children()[1]
       assert.equal(
         lastName.previous().toString(),
-        '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]'
+        '[nodeDescription=[first-name] index=[2] depth=[2]]'
       )
     })
   })
@@ -404,7 +404,7 @@ describe('Xmltr', function () {
       const lastName = tree.byTags('student')[0].byTags('last-name')[0]
       assert.equal(
         lastName.toString(),
-        '[nodeDescription=[last-name] nodeIndex=[4] nestingLevel=[2]]'
+        '[nodeDescription=[last-name] index=[4] depth=[2]]'
       )
     })
 
@@ -413,7 +413,7 @@ describe('Xmltr', function () {
       const item1 = tree.byAttrsVals('items="3"')[0].byAttrsVals('name="1"')[0]
       assert.equal(
         item1.toString(),
-        '[nodeDescription=[item name="1" /] nodeIndex=[2] nestingLevel=[2]]'
+        '[nodeDescription=[item name="1" /] index=[2] depth=[2]]'
       )
     })
 
@@ -422,7 +422,7 @@ describe('Xmltr', function () {
       const item1 = tree.byAttrs('items')[0].byAttrs('name')[0]
       assert.equal(
         item1.toString(),
-        '[nodeDescription=[item name="1" /] nodeIndex=[2] nestingLevel=[2]]'
+        '[nodeDescription=[item name="1" /] index=[2] depth=[2]]'
       )
     })
 
@@ -431,7 +431,7 @@ describe('Xmltr', function () {
       const item1 = tree.byTags('shop-cart')[0].byAttrs('name')[2]
       assert.equal(
         item1.toString(),
-        '[nodeDescription=[item name="3" /] nodeIndex=[4] nestingLevel=[2]]'
+        '[nodeDescription=[item name="3" /] index=[4] depth=[2]]'
       )
     })
   })
@@ -453,10 +453,10 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tree.toString(),
         [
-          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
-          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]'
+          '[nodeDescription=[persons] index=[0] depth=[0]]',
+          '[nodeDescription=[student] index=[1] depth=[1]]',
+          '[nodeDescription=[first-name] index=[2] depth=[2]]',
+          '[nodeDescription=[#text John] index=[3] depth=[3]]'
         ]
       )
     })
@@ -470,8 +470,8 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tree.toString(),
         [
-          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[persons] index=[0] depth=[0]]',
+          '[nodeDescription=[student] index=[1] depth=[1]]',
         ]
       )
     })
@@ -486,12 +486,12 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tree.toString(),
         [
-          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
-          '[nodeDescription=[#text Rick] nodeIndex=[3] nestingLevel=[3]]',
-          '[nodeDescription=[last-name] nodeIndex=[4] nestingLevel=[2]]',
-          '[nodeDescription=[#text Doe] nodeIndex=[5] nestingLevel=[3]]'
+          '[nodeDescription=[persons] index=[0] depth=[0]]',
+          '[nodeDescription=[student] index=[1] depth=[1]]',
+          '[nodeDescription=[first-name] index=[2] depth=[2]]',
+          '[nodeDescription=[#text Rick] index=[3] depth=[3]]',
+          '[nodeDescription=[last-name] index=[4] depth=[2]]',
+          '[nodeDescription=[#text Doe] index=[5] depth=[3]]'
         ]
       )
     })
@@ -504,12 +504,12 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tree.toString(),
         [
-          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
-          '[nodeDescription=[#text Rick] nodeIndex=[3] nestingLevel=[3]]',
-          '[nodeDescription=[last-name] nodeIndex=[4] nestingLevel=[2]]',
-          '[nodeDescription=[#text Doe] nodeIndex=[5] nestingLevel=[3]]'
+          '[nodeDescription=[persons] index=[0] depth=[0]]',
+          '[nodeDescription=[student] index=[1] depth=[1]]',
+          '[nodeDescription=[first-name] index=[2] depth=[2]]',
+          '[nodeDescription=[#text Rick] index=[3] depth=[3]]',
+          '[nodeDescription=[last-name] index=[4] depth=[2]]',
+          '[nodeDescription=[#text Doe] index=[5] depth=[3]]'
         ]
       )
     })
@@ -522,8 +522,8 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tree.toString(),
         [
-          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[#text Test] nodeIndex=[1] nestingLevel=[1]]'
+          '[nodeDescription=[persons] index=[0] depth=[0]]',
+          '[nodeDescription=[#text Test] index=[1] depth=[1]]'
         ]
       )
     })
@@ -538,14 +538,14 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tree.toString(),
         [
-          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
-          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
-          '[nodeDescription=[middle-name] nodeIndex=[4] nestingLevel=[2]]',
-          '[nodeDescription=[#text Aron] nodeIndex=[5] nestingLevel=[3]]',
-          '[nodeDescription=[last-name] nodeIndex=[6] nestingLevel=[2]]',
-          '[nodeDescription=[#text Doe] nodeIndex=[7] nestingLevel=[3]]'
+          '[nodeDescription=[persons] index=[0] depth=[0]]',
+          '[nodeDescription=[student] index=[1] depth=[1]]',
+          '[nodeDescription=[first-name] index=[2] depth=[2]]',
+          '[nodeDescription=[#text John] index=[3] depth=[3]]',
+          '[nodeDescription=[middle-name] index=[4] depth=[2]]',
+          '[nodeDescription=[#text Aron] index=[5] depth=[3]]',
+          '[nodeDescription=[last-name] index=[6] depth=[2]]',
+          '[nodeDescription=[#text Doe] index=[7] depth=[3]]'
         ]
       )
     })
@@ -558,13 +558,13 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tree.toString(),
         [
-          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
-          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
-          '[nodeDescription=[middle-name] nodeIndex=[4] nestingLevel=[2]]',
-          '[nodeDescription=[last-name] nodeIndex=[5] nestingLevel=[2]]',
-          '[nodeDescription=[#text Doe] nodeIndex=[6] nestingLevel=[3]]'
+          '[nodeDescription=[persons] index=[0] depth=[0]]',
+          '[nodeDescription=[student] index=[1] depth=[1]]',
+          '[nodeDescription=[first-name] index=[2] depth=[2]]',
+          '[nodeDescription=[#text John] index=[3] depth=[3]]',
+          '[nodeDescription=[middle-name] index=[4] depth=[2]]',
+          '[nodeDescription=[last-name] index=[5] depth=[2]]',
+          '[nodeDescription=[#text Doe] index=[6] depth=[3]]'
         ]
       )
     })
@@ -579,14 +579,14 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tree.toString(),
         [
-          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
-          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
-          '[nodeDescription=[middle-name] nodeIndex=[4] nestingLevel=[2]]',
-          '[nodeDescription=[#text Aron] nodeIndex=[5] nestingLevel=[3]]',
-          '[nodeDescription=[last-name] nodeIndex=[6] nestingLevel=[2]]',
-          '[nodeDescription=[#text Doe] nodeIndex=[7] nestingLevel=[3]]'
+          '[nodeDescription=[persons] index=[0] depth=[0]]',
+          '[nodeDescription=[student] index=[1] depth=[1]]',
+          '[nodeDescription=[first-name] index=[2] depth=[2]]',
+          '[nodeDescription=[#text John] index=[3] depth=[3]]',
+          '[nodeDescription=[middle-name] index=[4] depth=[2]]',
+          '[nodeDescription=[#text Aron] index=[5] depth=[3]]',
+          '[nodeDescription=[last-name] index=[6] depth=[2]]',
+          '[nodeDescription=[#text Doe] index=[7] depth=[3]]'
         ]
       )
     })
@@ -601,14 +601,14 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tree.toString(),
         [
-          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
-          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
-          '[nodeDescription=[middle-name] nodeIndex=[4] nestingLevel=[2]]',
-          '[nodeDescription=[#text Aron] nodeIndex=[5] nestingLevel=[3]]',
-          '[nodeDescription=[last-name] nodeIndex=[6] nestingLevel=[2]]',
-          '[nodeDescription=[#text Doe] nodeIndex=[7] nestingLevel=[3]]'
+          '[nodeDescription=[persons] index=[0] depth=[0]]',
+          '[nodeDescription=[student] index=[1] depth=[1]]',
+          '[nodeDescription=[first-name] index=[2] depth=[2]]',
+          '[nodeDescription=[#text John] index=[3] depth=[3]]',
+          '[nodeDescription=[middle-name] index=[4] depth=[2]]',
+          '[nodeDescription=[#text Aron] index=[5] depth=[3]]',
+          '[nodeDescription=[last-name] index=[6] depth=[2]]',
+          '[nodeDescription=[#text Doe] index=[7] depth=[3]]'
         ]
       )
     })
@@ -621,13 +621,13 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tree.toString(),
         [
-          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
-          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
-          '[nodeDescription=[middle-name] nodeIndex=[4] nestingLevel=[2]]',
-          '[nodeDescription=[last-name] nodeIndex=[5] nestingLevel=[2]]',
-          '[nodeDescription=[#text Doe] nodeIndex=[6] nestingLevel=[3]]'
+          '[nodeDescription=[persons] index=[0] depth=[0]]',
+          '[nodeDescription=[student] index=[1] depth=[1]]',
+          '[nodeDescription=[first-name] index=[2] depth=[2]]',
+          '[nodeDescription=[#text John] index=[3] depth=[3]]',
+          '[nodeDescription=[middle-name] index=[4] depth=[2]]',
+          '[nodeDescription=[last-name] index=[5] depth=[2]]',
+          '[nodeDescription=[#text Doe] index=[6] depth=[3]]'
         ]
       )
     })
@@ -641,8 +641,8 @@ describe('Xmltr', function () {
       assert.deepEqual(
         tag.toString(),
         [
-          '[nodeDescription=[tag] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[#text tag content] nodeIndex=[1] nestingLevel=[1]]'
+          '[nodeDescription=[tag] index=[0] depth=[0]]',
+          '[nodeDescription=[#text tag content] index=[1] depth=[1]]'
         ]
       )
     })
@@ -658,10 +658,10 @@ describe('Xmltr', function () {
       assert.deepEqual(
         parent.toString(),
         [
-          '[nodeDescription=[parent] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[child1] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[child2] nodeIndex=[2] nestingLevel=[1]]',
-          '[nodeDescription=[child3] nodeIndex=[3] nestingLevel=[1]]'
+          '[nodeDescription=[parent] index=[0] depth=[0]]',
+          '[nodeDescription=[child1] index=[1] depth=[1]]',
+          '[nodeDescription=[child2] index=[2] depth=[1]]',
+          '[nodeDescription=[child3] index=[3] depth=[1]]'
         ]
       )
     })
@@ -677,10 +677,10 @@ describe('Xmltr', function () {
       assert.deepEqual(
         parent.toString(),
         [
-          '[nodeDescription=[parent] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[child1] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[child3] nodeIndex=[2] nestingLevel=[1]]',
-          '[nodeDescription=[child2] nodeIndex=[3] nestingLevel=[1]]'
+          '[nodeDescription=[parent] index=[0] depth=[0]]',
+          '[nodeDescription=[child1] index=[1] depth=[1]]',
+          '[nodeDescription=[child3] index=[2] depth=[1]]',
+          '[nodeDescription=[child2] index=[3] depth=[1]]'
         ]
       )
     })
@@ -696,10 +696,10 @@ describe('Xmltr', function () {
       assert.deepEqual(
         parent1.toString(),
         [
-          '[nodeDescription=[parent] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[child1] nodeIndex=[1] nestingLevel=[1]]',
-          '[nodeDescription=[parent2] nodeIndex=[2] nestingLevel=[1]]',
-          '[nodeDescription=[child2] nodeIndex=[3] nestingLevel=[2]]'
+          '[nodeDescription=[parent] index=[0] depth=[0]]',
+          '[nodeDescription=[child1] index=[1] depth=[1]]',
+          '[nodeDescription=[parent2] index=[2] depth=[1]]',
+          '[nodeDescription=[child2] index=[3] depth=[2]]'
         ]
       )
     })
