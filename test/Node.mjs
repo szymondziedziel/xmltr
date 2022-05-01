@@ -8,15 +8,15 @@ describe('Xmltr', function () {
   describe('Constructing object', function () {
     it('Should create appropriate object', function () {
       assert.equal(
-        (new Xmltr('<a>')).toString(),
+        (new Xmltr('<a>')).reprDeep(),
         '[nodeDescription=[a] index=[0] depth=[0]]'
       )
       assert.equal(
-        (new Xmltr('<a>', 0)).toString(),
+        (new Xmltr('<a>', 0)).reprDeep(),
         '[nodeDescription=[a] index=[0] depth=[0]]'
       )
       assert.equal(
-        (new Xmltr('<a>')).toString(),
+        (new Xmltr('<a>')).reprDeep(),
         '[nodeDescription=[a] index=[0] depth=[0]]'
       )
     })
@@ -34,7 +34,7 @@ describe('Xmltr', function () {
       assert.equal(tree.selfDeep().length, 6)
 
       assert.deepEqual(
-        tree.selfDeep().map(node => Xmltr.fromNode(tree, node).toString()),
+        tree.selfDeep().map(node => Xmltr.fromNode(tree, node).reprShallow()),
         [
           '[nodeDescription=[persons] index=[0] depth=[0]]',
           '[nodeDescription=[student] index=[1] depth=[1]]',
@@ -47,15 +47,15 @@ describe('Xmltr', function () {
 
     })
 
-    it('Self shallow is only a helper and it should requrn single raw node object', function () {
+    it('Self shallow is only a helper and it should return single raw node object', function () {
       const tree = new Xmltr(SAMPLE_XML)
       const lastName = tree.byTags('last-name')[0]
       assert.equal(
-        Xmltr.fromNode(tree, tree.selfShallow()).toString(),
+        tree.reprShallow(),
         '[nodeDescription=[persons] index=[0] depth=[0]]'
       )
       assert.equal(
-        lastName.toString(),
+        lastName.reprShallow(),
         '[nodeDescription=[last-name] index=[4] depth=[2]]'
       )
     })
@@ -321,7 +321,7 @@ describe('Xmltr', function () {
     it('Getting children', function () {
       const tree = new Xmltr(SAMPLE_XML)
       assert.deepEqual(
-        tree.children().map(node => node.toString()),
+        tree.children().map(node => node.reprShallow()),
         [
           '[nodeDescription=[student] index=[1] depth=[1]]'
         ]
@@ -331,7 +331,7 @@ describe('Xmltr', function () {
     it('Getting children 2', function () {
       const tree = new Xmltr(SAMPLE_XML)
       assert.deepEqual(
-        tree.children()[0].children().map(node => node.toString()),
+        tree.children()[0].children().map(node => node.reprShallow()),
         [
           '[nodeDescription=[first-name] index=[2] depth=[2]]',
           '[nodeDescription=[last-name] index=[4] depth=[2]]'
@@ -342,7 +342,7 @@ describe('Xmltr', function () {
     it('Getting children text node', function () {
       const tree = new Xmltr(SAMPLE_XML)
       assert.deepEqual(
-        tree.children()[0].children()[0].children().map(node => node.toString()),
+        tree.children()[0].children()[0].children().map(node => node.reprShallow()),
         [
           '[nodeDescription=[#text John] index=[3] depth=[3]]'
         ]
@@ -370,11 +370,11 @@ describe('Xmltr', function () {
       const tree = new Xmltr(SAMPLE_XML)
       const student = tree.byTags('student')[0]
       assert.equal(
-        student.children()[0].parent().toString(),
+        student.children()[0].parent().reprShallow(),
         '[nodeDescription=[student] index=[1] depth=[1]]'
       )
       assert.equal(
-        student.children()[1].parent().toString(),
+        student.children()[1].parent().reprShallow(),
         '[nodeDescription=[student] index=[1] depth=[1]]'
       )
     })
@@ -383,7 +383,7 @@ describe('Xmltr', function () {
       const tree = new Xmltr(SAMPLE_XML)
       const firstName = tree.byTags('student')[0].children()[0]
       assert.equal(
-        firstName.next().toString(),
+        firstName.next().reprShallow(),
         '[nodeDescription=[last-name] index=[4] depth=[2]]'
       )
     })
@@ -392,7 +392,7 @@ describe('Xmltr', function () {
       const tree = new Xmltr(SAMPLE_XML)
       const lastName = tree.byTags('student')[0].children()[1]
       assert.equal(
-        lastName.previous().toString(),
+        lastName.previous().reprShallow(),
         '[nodeDescription=[first-name] index=[2] depth=[2]]'
       )
     })
@@ -403,7 +403,7 @@ describe('Xmltr', function () {
       const tree = new Xmltr(SAMPLE_XML)
       const lastName = tree.byTags('student')[0].byTags('last-name')[0]
       assert.equal(
-        lastName.toString(),
+        lastName.reprShallow(),
         '[nodeDescription=[last-name] index=[4] depth=[2]]'
       )
     })
@@ -412,7 +412,7 @@ describe('Xmltr', function () {
       const tree = new Xmltr(SAMPLE_XML_2)
       const item1 = tree.byAttrsVals('items="3"')[0].byAttrsVals('name="1"')[0]
       assert.equal(
-        item1.toString(),
+        item1.reprShallow(),
         '[nodeDescription=[item name="1" /] index=[2] depth=[2]]'
       )
     })
@@ -421,7 +421,7 @@ describe('Xmltr', function () {
       const tree = new Xmltr(SAMPLE_XML_2)
       const item1 = tree.byAttrs('items')[0].byAttrs('name')[0]
       assert.equal(
-        item1.toString(),
+        item1.reprShallow(),
         '[nodeDescription=[item name="1" /] index=[2] depth=[2]]'
       )
     })
@@ -430,7 +430,7 @@ describe('Xmltr', function () {
       const tree = new Xmltr(SAMPLE_XML_2)
       const item1 = tree.byTags('shop-cart')[0].byAttrs('name')[2]
       assert.equal(
-        item1.toString(),
+        item1.reprShallow(),
         '[nodeDescription=[item name="3" /] index=[4] depth=[2]]'
       )
     })
@@ -441,7 +441,7 @@ describe('Xmltr', function () {
       const tree = new Xmltr(SAMPLE_XML)
       tree.rm()
       assert.deepEqual(
-        tree.toString(),
+        tree.reprDeep(),
         []
       )
     })
@@ -451,7 +451,7 @@ describe('Xmltr', function () {
       const lastName = tree.byTags('student')[0].byTags('last-name')[0]
       lastName.rm()
       assert.deepEqual(
-        tree.toString(),
+        tree.reprDeep(),
         [
           '[nodeDescription=[persons] index=[0] depth=[0]]',
           '[nodeDescription=[student] index=[1] depth=[1]]',
@@ -468,7 +468,7 @@ describe('Xmltr', function () {
       const lastName = tree.byTags('student')[0].byTags('last-name')[0]
       lastName.rm()
       assert.deepEqual(
-        tree.toString(),
+        tree.reprDeep(),
         [
           '[nodeDescription=[persons] index=[0] depth=[0]]',
           '[nodeDescription=[student] index=[1] depth=[1]]',
@@ -484,7 +484,7 @@ describe('Xmltr', function () {
       const newFirstName = (new Xmltr('Rick'))
       firstName.replace(newFirstName)
       assert.deepEqual(
-        tree.toString(),
+        tree.reprDeep(),
         [
           '[nodeDescription=[persons] index=[0] depth=[0]]',
           '[nodeDescription=[student] index=[1] depth=[1]]',
@@ -502,7 +502,7 @@ describe('Xmltr', function () {
       const newFirstName = (new Xmltr('<first-name>Rick</first-name>'))
       firstName.replace(newFirstName)
       assert.deepEqual(
-        tree.toString(),
+        tree.reprDeep(),
         [
           '[nodeDescription=[persons] index=[0] depth=[0]]',
           '[nodeDescription=[student] index=[1] depth=[1]]',
@@ -520,7 +520,7 @@ describe('Xmltr', function () {
       const anything = (new Xmltr('Test'))
       student.replace(anything)
       assert.deepEqual(
-        tree.toString(),
+        tree.reprDeep(),
         [
           '[nodeDescription=[persons] index=[0] depth=[0]]',
           '[nodeDescription=[#text Test] index=[1] depth=[1]]'
@@ -536,7 +536,7 @@ describe('Xmltr', function () {
       const middleName = new Xmltr('<middle-name>Aron</middle-name>')
       firstName.after(middleName)
       assert.deepEqual(
-        tree.toString(),
+        tree.reprDeep(),
         [
           '[nodeDescription=[persons] index=[0] depth=[0]]',
           '[nodeDescription=[student] index=[1] depth=[1]]',
@@ -556,7 +556,7 @@ describe('Xmltr', function () {
       const middleNameTag = (new Xmltr('<middle-name>'))
       firstName.after(middleNameTag)
       assert.deepEqual(
-        tree.toString(),
+        tree.reprDeep(),
         [
           '[nodeDescription=[persons] index=[0] depth=[0]]',
           '[nodeDescription=[student] index=[1] depth=[1]]',
@@ -577,7 +577,7 @@ describe('Xmltr', function () {
       middleNameTag.insertChild(middleNameText)
       firstName.after(middleNameTag)
       assert.deepEqual(
-        tree.toString(),
+        tree.reprDeep(),
         [
           '[nodeDescription=[persons] index=[0] depth=[0]]',
           '[nodeDescription=[student] index=[1] depth=[1]]',
@@ -599,7 +599,7 @@ describe('Xmltr', function () {
       const middleName = (new Xmltr('<middle-name>Aron</middle-name>'))
       lastName.before(middleName)
       assert.deepEqual(
-        tree.toString(),
+        tree.reprDeep(),
         [
           '[nodeDescription=[persons] index=[0] depth=[0]]',
           '[nodeDescription=[student] index=[1] depth=[1]]',
@@ -619,7 +619,7 @@ describe('Xmltr', function () {
       const middleNameTag = (new Xmltr('<middle-name>'))
       lastName.before(middleNameTag)
       assert.deepEqual(
-        tree.toString(),
+        tree.reprDeep(),
         [
           '[nodeDescription=[persons] index=[0] depth=[0]]',
           '[nodeDescription=[student] index=[1] depth=[1]]',
@@ -639,7 +639,7 @@ describe('Xmltr', function () {
       const tagContent = new Xmltr('tag content')
       tag.insertChild(tagContent)
       assert.deepEqual(
-        tag.toString(),
+        tag.reprDeep(),
         [
           '[nodeDescription=[tag] index=[0] depth=[0]]',
           '[nodeDescription=[#text tag content] index=[1] depth=[1]]'
@@ -656,7 +656,7 @@ describe('Xmltr', function () {
       parent.insertChild(child2)
       parent.insertChild(child3)
       assert.deepEqual(
-        parent.toString(),
+        parent.reprDeep(),
         [
           '[nodeDescription=[parent] index=[0] depth=[0]]',
           '[nodeDescription=[child1] index=[1] depth=[1]]',
@@ -675,7 +675,7 @@ describe('Xmltr', function () {
       parent.insertChild(child3)
       parent.insertChild(child2)
       assert.deepEqual(
-        parent.toString(),
+        parent.reprDeep(),
         [
           '[nodeDescription=[parent] index=[0] depth=[0]]',
           '[nodeDescription=[child1] index=[1] depth=[1]]',
@@ -694,7 +694,7 @@ describe('Xmltr', function () {
       parent2.insertChild(child2)
       parent1.insertChild(parent2)
       assert.deepEqual(
-        parent1.toString(),
+        parent1.reprDeep(),
         [
           '[nodeDescription=[parent] index=[0] depth=[0]]',
           '[nodeDescription=[child1] index=[1] depth=[1]]',

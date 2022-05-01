@@ -13,7 +13,7 @@ class WrongAttributeNameTypeProvided extends Error {
 }
 
 class Xmltr {
-  constructor (data, range, parentObjects) {
+  constructor (data, id) {
     if (typeof data === 'string') {
       this.nodes = this._parse(data)
     } else if (Array.isArray(data)) {
@@ -21,12 +21,11 @@ class Xmltr {
     } else {
       throw new Error('Invalid data passed to Nodes constructor')
     }
-    this.range = range || { from: 0, to: this.nodes.length }
-    this.parentObjects = parentObjects || []
+    this.id = id || this.nodes[0].id
   }
 
   static fromNode (xmltr, node) {
-    return new Xmltr(xmltr.nodes, { from: node.index, to: node.index + 1 }, xmltr.parentObjects)
+    return new Xmltr(xmltr.nodes, node.id)
   }
 
   getAttr (...names) {
@@ -131,21 +130,18 @@ class Xmltr {
   }
 
   byTags (...tags) {
-    this.parentObjects.push(this)
     return this.selfDeep()
       .filter(node => tags.includes(Xmltr.fromNode(this, node).tagName()))
       .map(node => Xmltr.fromNode(this, node))
   }
 
   byAttrs (...filters) {
-    this.parentObjects.push(this)
     return this.selfDeep()
       .filter(node => filters.map(f => node.line.indexOf(` ${f}`) > 0).find(e => e === true))
       .map(node => Xmltr.fromNode(this, node))
   }
 
   byAttrsVals (...filters) {
-    this.parentObjects.push(this)
     return this.selfDeep()
       .filter(node => filters.map(f => node.line.indexOf(` ${f}`) > 0).find(e => e === true))
       .map(node => Xmltr.fromNode(this, node))
@@ -249,7 +245,6 @@ class Xmltr {
     for (let i = 0; i < this.nodes.length; i++) {
       this.nodes[i].index = i
     }
-    this.parentObjects.forEach(obj => { obj.range = obj.selfRange() })
   }
 
   tagName () {
@@ -271,7 +266,7 @@ class Xmltr {
     if (!parent) { return null }
     const children = parent.children()
     const currentChildIndex = children
-      .findIndex(child => child.range.from === this.range.from && child.range.to === this.range.to)
+      .findIndex(child => child.id === this.id)
     return children[currentChildIndex - 1]
   }
 
@@ -280,7 +275,7 @@ class Xmltr {
     if (!parent) { return null }
     const children = parent.children()
     const currentChildIndex = children
-      .findIndex(child => child.range.from === this.range.from && child.range.to === this.range.to)
+      .findIndex(child => child.id === this.id)
     return children[currentChildIndex + 1]
   }
 
@@ -328,13 +323,14 @@ class Xmltr {
     const nodes = []
 
     lines.forEach(line => {
+      const id = `${process.hrtime.bigint()}-${[0, 0, 0, 0].map(n => '0123456789abcdef'.split('')[Math.floor(Math.random() * (16))]).join('')}`
       if (line[line.length - 2] === '/') {
-        nodes.push({ line, index, depth })
+        nodes.push({ line, index, depth, id })
         index++
       } else if (line[1] === '/') {
         depth--
       } else {
-        nodes.push({ line, index, depth })
+        nodes.push({ line, index, depth, id })
         if (line[0] === '<') {
           depth++
         }
@@ -356,8 +352,15 @@ class Xmltr {
     return `#text ${current.line}`
   }
 
-  toString () {
-    const results = this.nodes.slice(this.range.from, this.range.to).map(node => {
+  reprShallow () {
+    const { from } = this.selfRange()
+    const node = this.nodes[from]
+    return `[nodeDescription=[${Xmltr.fromNode(this, node)._nodeDescription()}] index=[${node.index}] depth=[${node.depth}]]`
+  }
+
+  reprDeep () {
+    const { from, to } = this.selfRange()
+    const results = this.nodes.slice(from, to).map(node => {
       return `[nodeDescription=[${Xmltr.fromNode(this, node)._nodeDescription()}] index=[${node.index}] depth=[${node.depth}]]`
     })
 
@@ -365,15 +368,12 @@ class Xmltr {
   }
 
   toStringDebug () {
-    const results = this.nodes.slice(this.range.from, this.range.to).map(node => {
+    const { from, to } = this.selfRange()
+    const results = this.nodes.slice(from, to).map(node => {
       return `[nodeDescription=[${Xmltr.fromNode(this, node)._nodeDescription()}] index=[${node.index}] depth=[${node.depth}] t=[${node.t}]]`
     })
 
     return results.length === 1 ? results[0] : results
-  }
-
-  selfShallow () {
-    return this.nodes[this.range.from]
   }
 
   selfDeep () {
@@ -381,9 +381,14 @@ class Xmltr {
     return this.nodes.slice(from, from + length)
   }
 
+  selfShallow () {
+    return this.nodes.find(node => node.id === this.id)
+  }
+
   selfRange () {
-    const from = this.range.from
-    let length = 1
+    const current = this.nodes.find(node => node.id === this.id)
+    const from = current !== undefined ? current.index : 0
+    let length = current !== undefined ? 1 : 0
     for (let i = from + 1; i < this.nodes.length; i++) {
       if (this.nodes[i].depth > this.selfShallow().depth) {
         length++

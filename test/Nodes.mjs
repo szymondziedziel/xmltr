@@ -3,12 +3,12 @@ import { Xmltr } from '../xmltr.mjs'
 
 describe('Xmltr', function () {
   describe('Statics', function () {
-    it('Should prepare single tag node description', function() {
+    it('Should prepare single tag node description', function () {
       const tree = new Xmltr('<a a="b" c="d" />')
       const tagDesc = Xmltr.fromNode(tree, tree.nodes[0])._tagDesc()
       assert.deepEqual(
         tagDesc,
-        { tagName: 'a', attrs: {a: 'b', c: 'd'}}
+        { tagName: 'a', attrs: { a: 'b', c: 'd' } }
       )
     })
   })
@@ -16,7 +16,7 @@ describe('Xmltr', function () {
   describe('Usage', function () {
     it('Should create appropriate object', function () {
       assert.deepEqual(
-        (new Xmltr('<p><c /><c></c></p>')).toString(),
+        (new Xmltr('<p><c /><c></c></p>')).reprDeep(),
         [
           '[nodeDescription=[p] index=[0] depth=[0]]',
           '[nodeDescription=[c /] index=[1] depth=[1]]',
@@ -27,7 +27,7 @@ describe('Xmltr', function () {
 
     it('Should create appropriate object with text node', function () {
       assert.deepEqual(
-        (new Xmltr('<p><c>test text</c><c /></p>')).toString(),
+        (new Xmltr('<p><c>test text</c><c /></p>')).reprDeep(),
         [
           '[nodeDescription=[p] index=[0] depth=[0]]',
           '[nodeDescription=[c] index=[1] depth=[1]]',
@@ -39,7 +39,7 @@ describe('Xmltr', function () {
 
     it('Should create appropriate object with text node 2', function () {
       assert.deepEqual(
-        (new Xmltr('<persons><student><first-name>John</first-name><last-name>Doe</last-name></student></persons>')).toString(),
+        (new Xmltr('<persons><student><first-name>John</first-name><last-name>Doe</last-name></student></persons>')).reprDeep(),
         [
           '[nodeDescription=[persons] index=[0] depth=[0]]',
           '[nodeDescription=[student] index=[1] depth=[1]]',
@@ -53,14 +53,14 @@ describe('Xmltr', function () {
 
     it('Should find p by tag', function () {
       assert.deepEqual(
-        (new Xmltr('<p><c /><c></c></p>')).byTags('p')[0].toString(),
+        (new Xmltr('<p><c /><c></c></p>')).byTags('p')[0].reprShallow(),
         '[nodeDescription=[p] index=[0] depth=[0]]'
       )
     })
 
     it('Should find c by tag', function () {
       assert.deepEqual(
-        (new Xmltr('<p><c /><c></c></p>')).byTags('c').map(node => node.toString()),
+        (new Xmltr('<p><c /><c></c></p>')).byTags('c').map(node => node.reprShallow()),
         [
           '[nodeDescription=[c /] index=[1] depth=[1]]',
           '[nodeDescription=[c] index=[2] depth=[1]]'
@@ -70,7 +70,7 @@ describe('Xmltr', function () {
 
     it('Should find c with enabled attribute', function () {
       assert.deepEqual(
-        (new Xmltr('<p><c enabled="true"/><c></c></p>')).byAttrs('enabled').map(node => node.toString()),
+        (new Xmltr('<p><c enabled="true"/><c></c></p>')).byAttrs('enabled').map(node => node.reprShallow()),
         [
           '[nodeDescription=[c enabled="true"/] index=[1] depth=[1]]'
         ]
@@ -79,7 +79,7 @@ describe('Xmltr', function () {
 
     it('Should find c with enabled="true" attribute', function () {
       assert.deepEqual(
-        (new Xmltr('<p><c enabled="true"/><c></c></p>')).byAttrsVals('enabled="true"').map(node => node.toString()),
+        (new Xmltr('<p><c enabled="true"/><c></c></p>')).byAttrsVals('enabled="true"').map(node => node.reprShallow()),
         [
           '[nodeDescription=[c enabled="true"/] index=[1] depth=[1]]'
         ]
@@ -88,7 +88,7 @@ describe('Xmltr', function () {
 
     it('Should find c with enabled boolean attribute', function () {
       assert.deepEqual(
-        (new Xmltr('<p><c enabled/><c></c></p>')).byAttrs('enabled').map(node => node.toString()),
+        (new Xmltr('<p><c enabled/><c></c></p>')).byAttrs('enabled').map(node => node.reprShallow()),
         [
           '[nodeDescription=[c enabled/] index=[1] depth=[1]]'
         ]
@@ -97,7 +97,7 @@ describe('Xmltr', function () {
 
     it('Should find c with enabled="true" attribute', function () {
       assert.deepEqual(
-        (new Xmltr('<p><c enabled="true"/><c></c></p>')).byAttrsVals('enabled="true"').map(node => node.toString()),
+        (new Xmltr('<p><c enabled="true"/><c></c></p>')).byAttrsVals('enabled="true"').map(node => node.reprShallow()),
         [
           '[nodeDescription=[c enabled="true"/] index=[1] depth=[1]]'
         ]
@@ -106,7 +106,7 @@ describe('Xmltr', function () {
 
     it('Should find c that has any enabled attribute', function () {
       assert.deepEqual(
-        (new Xmltr('<p><c enabled="true" /><c enabled="false"></c></p>')).byAttrs('enabled').map(node => node.toString()),
+        (new Xmltr('<p><c enabled="true" /><c enabled="false"></c></p>')).byAttrs('enabled').map(node => node.reprShallow()),
         [
           '[nodeDescription=[c enabled="true" /] index=[1] depth=[1]]',
           '[nodeDescription=[c enabled="false"] index=[2] depth=[1]]'
