@@ -211,11 +211,11 @@ describe('Xmltr', function () {
       const node = new Xmltr('<some-tag attr1="value1" attr2="value2" boolattr1>')
       assert.equal(node.rmAttr('attr1'), true)
       assert.equal(node.getAttr('attr1'), null)
-      // assert.equal(node.rmAttr('attr2'), true)
-      // assert.equal(node.getAttr('attr2'), null)
-      // assert.equal(node.rmAttr('boolattr1'), true)
-      // assert.equal(node.getAttr('boolattr1'), null)
-      // assert.equal(node.rmAttr('non-existing-attr'), false)
+      assert.equal(node.rmAttr('attr2'), true)
+      assert.equal(node.getAttr('attr2'), null)
+      assert.equal(node.rmAttr('boolattr1'), true)
+      assert.equal(node.getAttr('boolattr1'), null)
+      assert.equal(node.rmAttr('non-existing-attr'), false)
     })
   })
 
@@ -523,7 +523,7 @@ describe('Xmltr', function () {
         tree.toString(),
         [
           '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-          '[nodeDescription=[#text Test] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[#text Test] nodeIndex=[1] nestingLevel=[1]]'
         ]
       )
     })
@@ -613,31 +613,30 @@ describe('Xmltr', function () {
       )
     })
 
-    // it('Insert middle-name tag before last-name with node', function () {
-    //   const tree = new Xmltr(SAMPLE_XML)
-    //   const lastName = tree.byTags('student')[0].byTags('last-name')[0]
-    //   const middleNameTag = (new Xmltr('<middle-name>'))
-    //   lastName.before(middleNameTag)
-    //   assert.deepEqual(
-    //     tree.toString(),
-    //     [
-    //       '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
-    //       '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
-    //       '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
-    //       '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
-    //       '[nodeDescription=[middle-name] nodeIndex=[4] nestingLevel=[2]]',
-    //       '[nodeDescription=[last-name] nodeIndex=[5] nestingLevel=[2]]',
-    //       '[nodeDescription=[#text Doe] nodeIndex=[6] nestingLevel=[3]]'
-    //     ]
-    //   )
-    // })
+    it('Insert middle-name tag before last-name with node', function () {
+      const tree = new Xmltr(SAMPLE_XML)
+      const lastName = tree.byTags('student')[0].byTags('last-name')[0]
+      const middleNameTag = (new Xmltr('<middle-name>'))
+      lastName.before(middleNameTag)
+      assert.deepEqual(
+        tree.toString(),
+        [
+          '[nodeDescription=[persons] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[student] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[first-name] nodeIndex=[2] nestingLevel=[2]]',
+          '[nodeDescription=[#text John] nodeIndex=[3] nestingLevel=[3]]',
+          '[nodeDescription=[middle-name] nodeIndex=[4] nestingLevel=[2]]',
+          '[nodeDescription=[last-name] nodeIndex=[5] nestingLevel=[2]]',
+          '[nodeDescription=[#text Doe] nodeIndex=[6] nestingLevel=[3]]'
+        ]
+      )
+    })
   })
 
   describe('Inserting children', function () {
     it('Create node and add child', function () {
       const tag = new Xmltr('<tag>')
       const tagContent = new Xmltr('tag content')
-      // console.log('TAG and TAG_CONTENT', tag, tagContent)
       tag.insertChild(tagContent)
       assert.deepEqual(
         tag.toString(),
@@ -648,63 +647,61 @@ describe('Xmltr', function () {
       )
     })
 
-    // it('Create node and add three children', function () {
-    //   const parent = new Xmltr('<parent>')
-    //   const child1 = new Xmltr('<child1>')
-    //   const child2 = new Xmltr('<child2>')
-    //   const child3 = new Xmltr('<child3>')
-    //   parent.insertChild(child1)
-    //   parent.insertChild(child2)
-    //   console.log(parent)
-    //   parent.insertChild(child3)
-    //   assert.deepEqual(
-    //     parent.nodes.map(node => node.toString()),
-    //     [
-    //       '[nodeDescription=[parent] nodeIndex=[0] nestingLevel=[0]]',
-    //       '[nodeDescription=[child1] nodeIndex=[1] nestingLevel=[1]]',
-    //       '[nodeDescription=[child2] nodeIndex=[2] nestingLevel=[1]]',
-    //       '[nodeDescription=[child3] nodeIndex=[3] nestingLevel=[1]]'
-    //     ]
-    //   )
-    // })
+    it('Create node and add three children', function () {
+      const parent = new Xmltr('<parent>')
+      const child1 = new Xmltr('<child1>')
+      const child2 = new Xmltr('<child2>')
+      const child3 = new Xmltr('<child3>')
+      parent.insertChild(child1)
+      parent.insertChild(child2)
+      parent.insertChild(child3)
+      assert.deepEqual(
+        parent.toString(),
+        [
+          '[nodeDescription=[parent] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[child1] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[child2] nodeIndex=[2] nestingLevel=[1]]',
+          '[nodeDescription=[child3] nodeIndex=[3] nestingLevel=[1]]'
+        ]
+      )
+    })
 
-    // it('Create node and add three children but in different order', function () {
-    //   const parent = (new Xmltr('<parent>'))
-    //   const child1 = (new Xmltr('<child1>'))
-    //   const child2 = (new Xmltr('<child2>'))
-    //   const child3 = (new Xmltr('<child3>'))
-    //   parent.insertChild(child1)
-    //   parent.insertChild(child3)
-    //   parent.insertChild(child2)
-    //   assert.deepEqual(
-    //     parent.nodes.map(node => node.toString()),
-    //     [
-    //       '[nodeDescription=[parent] nodeIndex=[0] nestingLevel=[0]]',
-    //       '[nodeDescription=[child1] nodeIndex=[1] nestingLevel=[1]]',
-    //       '[nodeDescription=[child3] nodeIndex=[2] nestingLevel=[1]]',
-    //       '[nodeDescription=[child2] nodeIndex=[3] nestingLevel=[1]]'
-    //     ]
-    //   )
-    // })
+    it('Create node and add three children but in different order', function () {
+      const parent = new Xmltr('<parent>')
+      const child1 = new Xmltr('<child1>')
+      const child2 = new Xmltr('<child2>')
+      const child3 = new Xmltr('<child3>')
+      parent.insertChild(child1)
+      parent.insertChild(child3)
+      parent.insertChild(child2)
+      assert.deepEqual(
+        parent.toString(),
+        [
+          '[nodeDescription=[parent] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[child1] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[child3] nodeIndex=[2] nestingLevel=[1]]',
+          '[nodeDescription=[child2] nodeIndex=[3] nestingLevel=[1]]'
+        ]
+      )
+    })
 
-    // it('Create tree from node using insertChild', function () {
-    //   const parent1 = (new Xmltr('<parent>'))
-    //   const child1 = (new Xmltr('<child1>'))
-    //   const parent2 = (new Xmltr('<child2>'))
-    //   const child2 = (new Xmltr('<child3>'))
-    //   parent1.insertChild(child1)
-    //   parent2.insertChild(child2)
-    //   parent1.insertChild(parent2)
-    //   assert.deepEqual(
-    //     parent.nodes.map(node => node.toString()),
-    //     [
-    //       '[nodeDescription=[parent] nodeIndex=[0] nestingLevel=[0]]',
-    //       '[nodeDescription=[child1] nodeIndex=[1] nestingLevel=[1]]',
-    //       '[nodeDescription=[parent2] nodeIndex=[2] nestingLevel=[1]]',
-    //       '[nodeDescription=[child2] nodeIndex=[3] nestingLevel=[2]]'
-    //     ]
-    //   )
-    // })
+    it('Create tree from node using insertChild', function () {
+      const parent1 = new Xmltr('<parent>')
+      const child1 = new Xmltr('<child1>')
+      const parent2 = new Xmltr('<parent2>')
+      const child2 = new Xmltr('<child2>')
+      parent1.insertChild(child1)
+      parent2.insertChild(child2)
+      parent1.insertChild(parent2)
+      assert.deepEqual(
+        parent1.toString(),
+        [
+          '[nodeDescription=[parent] nodeIndex=[0] nestingLevel=[0]]',
+          '[nodeDescription=[child1] nodeIndex=[1] nestingLevel=[1]]',
+          '[nodeDescription=[parent2] nodeIndex=[2] nestingLevel=[1]]',
+          '[nodeDescription=[child2] nodeIndex=[3] nestingLevel=[2]]'
+        ]
+      )
+    })
   })
-
 })

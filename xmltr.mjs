@@ -1,12 +1,3 @@
-// class N {
-//   constructor (line, nodeIndex = 0, nestingLevel = 0) {
-//     this.line = line
-//     this.nodeIndex = nodeIndex
-//     this.nestingLevel = nestingLevel
-//     this.nodes = [this]
-//   }
-// }
-
 class Xmltr {
   constructor (data, range, parentObjects) {
     if (typeof data === 'string') {
@@ -134,30 +125,13 @@ class Xmltr {
 
   byAttrs (...filters) {
     this.parentObjects.push(this)
-    // return this.selfDeep()
-    //   .filter(node => filters
-    //     .map(filter => Xmltr.fromNode(this, node).getAttr(filter) !== undefined)
-    //     .find(filterMatches => filterMatches === true) !== undefined)
     return this.selfDeep()
       .filter(node => filters.map(f => node.line.indexOf(` ${f}`) > 0).find(e => e === true))
       .map(node => Xmltr.fromNode(this, node))
   }
 
-  // _searchNodesSubset () {
-  //   const { from, to } = this.range
-  //   return this.nodes.slice(from, to)
-  // }
-
   byAttrsVals (...filters) {
     this.parentObjects.push(this)
-    // return this._searchNodesSubset()
-    //   .filter(node => filters
-    //     .map(filter => {
-    //       const [filterAttrName, filterAttrValue] = filter.split('=')
-    //         .map(elem => elem.replaceAll('"', ''))
-    //       return node.getMultiAttr(filterAttrName).includes(filterAttrValue)
-    //     })
-    //     .find(filterMatches => filterMatches === true) !== undefined)
     return this.selfDeep()
       .filter(node => filters.map(f => node.line.indexOf(` ${f}`) > 0).find(e => e === true))
       .map(node => Xmltr.fromNode(this, node))
@@ -205,26 +179,14 @@ class Xmltr {
   }
 
   after (node) {
-    // const self = this.selfShallow()
     const { from, length } = this.selfRange()
     const currentNestingLevel = this.nodes[from].nestingLevel
-    // console.log(this, from, node)
-    // console.log('NODE_NODES', node.nodes)
     this._substituteFromLength(node, from + length, 0, currentNestingLevel)
-    // node.nodes.forEach((node, index) => {
-    //   node.nestingLevel = index + self.nestingLevel
-    // })
-    // console.log('NODE_NODES_AFTER', node.nodes)
-    // // console.log(node)
-    // this.nodes.splice(from, length, ...node.nodes)
-    // this._renumber()
-    // this.range = { from: }
   }
 
   before (node) {
     const { from } = this.selfRange()
     const currentNestingLevel = this.nodes[from].nestingLevel
-    // console.log(this, from, node)
     this._substituteFromLength(node, from, 0, currentNestingLevel)
   }
 
@@ -235,26 +197,15 @@ class Xmltr {
   }
 
   insertChild (node, index = -1) {
-    console.log(this.nodes, node.nodes)
-    // if (index === -1) {
-    //   index = this.children().length
-    // }
-    // const current = this.selfShallow()
-    // node.nodes.forEach((node, index) => {
-    //   node.nestingLevel += current.nestingLevel + 1
-    // })
-    // if (index === 0) {
-    //   // console.log('TU_WPADA', current)
-    //   this.nodes.splice(this.range.from + 1, 0, ...node.nodes)
-    //   // this.after(node)
-    //   this.range.to += node.nodes.length
-    //   // console.log('NEW_THIS', this, this.nodes)
-    // } else if (index === this.children().length) {
-    //   this.children()[index - 1].after(node)
-    // } else {
-    //   this.children()[index].before(node)
-    // }
-    // this._renumber()
+    index = index === -1 ? this.children().length : index
+    const current = this.selfShallow()
+    const { nodeIndex, nestingLevel } = current
+    this.nodes.splice(nodeIndex + index + 1, 0, ...node.nodes)
+    node.nodes.forEach(node => {
+      node.nestingLevel += nestingLevel + 1
+    })
+    this.range = this.selfRange()
+    this._renumber()
   }
 
   _substituteFromLength (node, from, length, currentNestingLevel) {
@@ -305,17 +256,6 @@ class Xmltr {
   }
 
   children () {
-    // if (!this.selfDeep().length) { return [] }
-    // const children = []
-    // const { nodeIndex, nestingLevel } = this
-    // for (let i = nodeIndex + 1; i < this.nodes.length; i++) {
-    //   if (this.nodes[i].nestingLevel <= nestingLevel) {
-    //     return children
-    //   } else if (this.nodes[i].nestingLevel === nestingLevel + 1) {
-    //     children.push(this.nodes[i])
-    //   }
-    // }
-    // return children
     const { nestingLevel } = this.selfShallow()
     return this.selfDeep()
       .filter(node => node.nestingLevel === nestingLevel + 1)
@@ -343,20 +283,6 @@ class Xmltr {
     return { from, length }
   }
 
-  // _cloneNodeDeep () {
-  //   const { from, length } = this.selfDeep()
-  //   const deepClone = []
-  //   for (let i = from; i < from + length; i++) {
-  //     deepClone.push(this.nodes[i]._cloneNodeShallow())
-  //   }
-  //   return deepClone
-  // }
-
-  // _cloneNodeShallow () {
-  //   const { line, nodeIndex, nestingLevel } = this
-  //   return JSON.parse(JSON.stringify({ line, nodeIndex, nestingLevel }))
-  // }
-
   _throwErrorWhenNotSingleNode () {
     return
     if (this.range.to - this.range.from !== 1) {
@@ -371,29 +297,6 @@ class Xmltr {
       throw Error('Accessing tag in text node')
     }
   }
-
-  // root () {
-  //   return Xmltr.fromNode(this, this.nodes[0])
-  // }
-
-  // byAttrsVals (...filters) {
-  //   return this.nodes.filter(node => {
-  //     const nodeParts = node._nodeDescription().match(/[a-zA-Z-_]+="[^"]+"/g) || []
-  //     return (new Set([...filters, ...nodeParts])).size === nodeParts.length
-  //   })
-  // };
-
-  // byTags (...tags) {
-  //   return this.nodes.filter(node => tags.includes(node.tagName()))
-  // }
-
-  // byAttrs (...filters) {
-  //   return this.nodes.filter(node => {
-  //     const attrs = (node._nodeDescription().match(/[a-zA-Z-_]+="[^"]+"|[a-zA-Z-_]+/g) || []).map(attrVal => attrVal.split('=')[0])
-  //     attrs.shift()
-  //     return (new Set([...filters, ...attrs])).size === attrs.length
-  //   })
-  // }
 
   _extract (xml) {
     const nodes = []
@@ -450,13 +353,8 @@ class Xmltr {
     return nodes
   }
 
-  // toString () {
-  //   return `[\n${this.toArrayOfStrings()}\n]`
-  // }
-
   _nodeDescription () {
     const current = this.selfShallow()
-    //console.log('CURRENT', current.line)
     if (current.line[0] === '<') {
       return current.line.substr(1, current.line.length - 2)
     }
