@@ -8,7 +8,7 @@
 // }
 
 class Xmltr {
-  constructor (data, range) {
+  constructor (data, range, parentObjects) {
     if (typeof data === 'string') {
       this.nodes = this._parse(data)
     } else if (Array.isArray(data)) {
@@ -17,17 +17,18 @@ class Xmltr {
       throw Error('Invalid data passed to Nodes constructor')
     }
     this.range = range || { from: 0, to: this.nodes.length }
+    this.parentObjects = parentObjects || []
   }
 
   static fromNode (xmltr, node) {
-    return new Xmltr(xmltr.nodes, { from: node.nodeIndex, to: node.nodeIndex + 1 })
+    return new Xmltr(xmltr.nodes, { from: node.nodeIndex, to: node.nodeIndex + 1 }, xmltr.parentObjects)
   }
 
   getAttr (...names) {
     if (names.length < 1) {
       throw Error('Node::getAttr requires at least one attribute name')
     }
-    const values = names.map(name => this.tagNodeArrayDescription(name).first.attrValue)
+    const values = names.map(name => this._tagNodeArrayDescription(name).first.attrValue)
     return values.length > 1 ? values : values[0]
   }
 
@@ -37,7 +38,7 @@ class Xmltr {
     }
     const nameValues = names
       .map(name =>
-        this.tagNodeArrayDescription(name).all.attrsValues.map(av => av[1])
+        this._tagNodeArrayDescription(name).all.attrsValues.map(av => av[1])
       )
       .map(nameValues => nameValues.filter(nameValue => nameValue !== undefined))
 
@@ -49,11 +50,11 @@ class Xmltr {
       throw Error('Node:rmAttr requires at least one attribute name')
     }
     const nameValues = names.map(name => {
-      const { tagName, attrIndex, attrs, attrName } = this.tagNodeArrayDescription(name).first
+      const { tagName, attrIndex, attrs, attrName } = this._tagNodeArrayDescription(name).first
 
       if (attrName !== undefined) {
         delete attrs[attrIndex]
-        this.line = `<${tagName} ${attrs.join(' ')}>`
+        this.selfShallow().line = `<${tagName} ${attrs.join(' ')}>`
         return true
       }
 
@@ -70,11 +71,11 @@ class Xmltr {
 
     const attrsIndexes = names
       .reduce((indexes, name) => {
-        indexes.push(...this.tagNodeArrayDescription(name).all.attrsIndexes)
+        indexes.push(...this._tagNodeArrayDescription(name).all.attrsIndexes)
         return indexes
       }, [])
     const rmResult = names
-      .map(name => this.tagNodeArrayDescription(name).all.attrsIndexes.length)
+      .map(name => this._tagNodeArrayDescription(name).all.attrsIndexes.length)
 
     const [tagName, ...attrs] = this._nodeDescription()
       .match(/[a-zA-Z0-9-_]+="[^"]+"|[a-zA-Z0-9-_]+/g) || []
@@ -89,7 +90,7 @@ class Xmltr {
   }
 
   setAttr (name, value) {
-    const { tagName, attrIndex, attrs, attr, attrName } = this.tagNodeArrayDescription(name).first
+    const { tagName, attrIndex, attrs, attr, attrName } = this._tagNodeArrayDescription(name).first
 
     if (attrName !== undefined) {
       attrs[attrIndex] = value !== undefined ? `${name}="${value}"` : name
@@ -97,7 +98,7 @@ class Xmltr {
       attrs.push(value !== undefined ? `${attr}="${value}"` : name)
     }
 
-    this.line = `<${tagName} ${attrs.join(' ')}>`
+    this.selfShallow().line = `<${tagName} ${attrs.join(' ')}>`
   }
 
   setMultiAttr (name, values = []) {
@@ -106,21 +107,7 @@ class Xmltr {
 
     attrs.push(...values.map(value => `${name}="${value}"`))
 
-    this.line = `<${tagName} ${attrs.join(' ')}>`
-  }
-
-  byAttrsVals (...filters) {
-    // return this._searchNodesSubset()
-    //   .filter(node => filters
-    //     .map(filter => {
-    //       const [filterAttrName, filterAttrValue] = filter.split('=')
-    //         .map(elem => elem.replaceAll('"', ''))
-    //       return node.getMultiAttr(filterAttrName).includes(filterAttrValue)
-    //     })
-    //     .find(filterMatches => filterMatches === true) !== undefined)
-    return this._searchNodesSubset()
-      .filter(node => filters.map(f => node.line.indexOf(` ${f}`) > 0).find(e => e === true))
-      .map(node => Xmltr.fromNode(this, node))
+    this.selfShallow().line = `<${tagName} ${attrs.join(' ')}>`
   }
 
   _tagDesc () {
@@ -130,7 +117,7 @@ class Xmltr {
     const tagName = nodeParts.shift()
     const attrs = nodeParts.reduce((result, attrVal) => {
       let [name, value] = attrVal.split('="')
-      value = value.substring(0, value.length - 1)
+      value = value !== undefined ? value.substring(0, value.length - 1) : undefined
       result[name] = value
       return result
     }, {})
@@ -139,27 +126,44 @@ class Xmltr {
   }
 
   byTags (...tags) {
-    return this._searchNodesSubset()
+    this.parentObjects.push(this)
+    return this.selfDeep()
       .filter(node => tags.includes(Xmltr.fromNode(this, node).tagName()))
       .map(node => Xmltr.fromNode(this, node))
   }
 
   byAttrs (...filters) {
-    // return this._searchNodesSubset()
+    this.parentObjects.push(this)
+    // return this.selfDeep()
     //   .filter(node => filters
     //     .map(filter => Xmltr.fromNode(this, node).getAttr(filter) !== undefined)
     //     .find(filterMatches => filterMatches === true) !== undefined)
-    return this._searchNodesSubset()
+    return this.selfDeep()
       .filter(node => filters.map(f => node.line.indexOf(` ${f}`) > 0).find(e => e === true))
       .map(node => Xmltr.fromNode(this, node))
   }
 
-  _searchNodesSubset () {
-    const { from, to } = this.range
-    return this.nodes.slice(from, to)
+  // _searchNodesSubset () {
+  //   const { from, to } = this.range
+  //   return this.nodes.slice(from, to)
+  // }
+
+  byAttrsVals (...filters) {
+    this.parentObjects.push(this)
+    // return this._searchNodesSubset()
+    //   .filter(node => filters
+    //     .map(filter => {
+    //       const [filterAttrName, filterAttrValue] = filter.split('=')
+    //         .map(elem => elem.replaceAll('"', ''))
+    //       return node.getMultiAttr(filterAttrName).includes(filterAttrValue)
+    //     })
+    //     .find(filterMatches => filterMatches === true) !== undefined)
+    return this.selfDeep()
+      .filter(node => filters.map(f => node.line.indexOf(` ${f}`) > 0).find(e => e === true))
+      .map(node => Xmltr.fromNode(this, node))
   }
 
-  tagNodeArrayDescription (name) {
+  _tagNodeArrayDescription (name) {
     this._throwErrorWhenNotSingleTagNode()
     const nodeParts = this._nodeDescription()
       .match(/[a-zA-Z0-9-_]+="[^"]+"|[a-zA-Z0-9-_]+/g) || []
@@ -195,49 +199,67 @@ class Xmltr {
   }
 
   rm () {
-    const { from, length } = this._findNodeRange()
+    const { from, length } = this.selfRange()
     this.nodes.splice(from, length)
     this._renumber()
   }
 
   after (node) {
-    const { from, length } = this._findNodeRange()
-    console.log(this, from, length, this.nodes)
+    // const self = this.selfShallow()
+    const { from, length } = this.selfRange()
     const currentNestingLevel = this.nodes[from].nestingLevel
+    // console.log(this, from, node)
+    // console.log('NODE_NODES', node.nodes)
     this._substituteFromLength(node, from + length, 0, currentNestingLevel)
+    // node.nodes.forEach((node, index) => {
+    //   node.nestingLevel = index + self.nestingLevel
+    // })
+    // console.log('NODE_NODES_AFTER', node.nodes)
+    // // console.log(node)
+    // this.nodes.splice(from, length, ...node.nodes)
+    // this._renumber()
+    // this.range = { from: }
   }
 
   before (node) {
-    const { from } = this._findNodeRange()
+    const { from } = this.selfRange()
     const currentNestingLevel = this.nodes[from].nestingLevel
+    // console.log(this, from, node)
     this._substituteFromLength(node, from, 0, currentNestingLevel)
   }
 
   replace (node) {
-    const { from, length } = this._findNodeRange()
+    const { from, length } = this.selfRange()
     const currentNestingLevel = this.nodes[from].nestingLevel
     this._substituteFromLength(node, from, length, currentNestingLevel)
   }
 
   insertChild (node, index = -1) {
-    if (index === -1) {
-      index = this.children().length
-    }
-    node.nodeIndex = this.nodeIndex + 1
-    node.nestingLevel = this.nestingLevel + 1
-    if (index === 0) {
-      this.nodes.splice(this.nodeIndex + 1, 0, node)
-    } else if (index === this.children().length) {
-      this.children()[index - 1].after(node)
-    } else {
-      this.children()[index].before(node)
-    }
-    this._renumber()
+    console.log(this.nodes, node.nodes)
+    // if (index === -1) {
+    //   index = this.children().length
+    // }
+    // const current = this.selfShallow()
+    // node.nodes.forEach((node, index) => {
+    //   node.nestingLevel += current.nestingLevel + 1
+    // })
+    // if (index === 0) {
+    //   // console.log('TU_WPADA', current)
+    //   this.nodes.splice(this.range.from + 1, 0, ...node.nodes)
+    //   // this.after(node)
+    //   this.range.to += node.nodes.length
+    //   // console.log('NEW_THIS', this, this.nodes)
+    // } else if (index === this.children().length) {
+    //   this.children()[index - 1].after(node)
+    // } else {
+    //   this.children()[index].before(node)
+    // }
+    // this._renumber()
   }
 
   _substituteFromLength (node, from, length, currentNestingLevel) {
     node.nodes.forEach((node, index) => {
-      node.nestingLevel = index + currentNestingLevel
+      node.nestingLevel = node.nestingLevel + currentNestingLevel
     })
     this.nodes.splice(from, length, ...node.nodes)
     this._renumber()
@@ -247,6 +269,7 @@ class Xmltr {
     for (let i = 0; i < this.nodes.length; i++) {
       this.nodes[i].nodeIndex = i
     }
+    this.parentObjects.forEach(obj => { obj.range = obj.selfRange() })
   }
 
   tagName () {
@@ -254,48 +277,49 @@ class Xmltr {
   }
 
   parent () {
-    if (!this.nodes) { return null }
-    const { nodeIndex, nestingLevel } = this
+    const { nodeIndex, nestingLevel } = this.selfShallow()
     for (let i = nodeIndex; i > -1; i--) {
       if (this.nodes[i].nestingLevel === nestingLevel - 1) {
-        return this.nodes[i]
+        return Xmltr.fromNode(this, this.nodes[i])
       }
     }
     return null
   }
 
   previous () {
-    if (!this.nodes) { return null }
     const parent = this.parent()
     if (!parent) { return null }
     const children = parent.children()
-    const currentArrIndex = children
-      .findIndex(child => child.nodeIndex === this.nodeIndex)
-    return children[currentArrIndex - 1]
+    const currentChildIndex = children
+      .findIndex(child => child.range.from === this.range.from && child.range.to === this.range.to)
+    return children[currentChildIndex - 1]
   }
 
   next () {
-    if (!this.nodes) { return null }
     const parent = this.parent()
     if (!parent) { return null }
     const children = parent.children()
-    const currentArrIndex = children
-      .findIndex(child => child.nodeIndex === this.nodeIndex)
-    return children[currentArrIndex + 1]
+    const currentChildIndex = children
+      .findIndex(child => child.range.from === this.range.from && child.range.to === this.range.to)
+    return children[currentChildIndex + 1]
   }
 
   children () {
-    if (!this.nodes) { return [] }
-    const children = []
-    const { nodeIndex, nestingLevel } = this
-    for (let i = nodeIndex + 1; i < this.nodes.length; i++) {
-      if (this.nodes[i].nestingLevel <= nestingLevel) {
-        return children
-      } else if (this.nodes[i].nestingLevel === nestingLevel + 1) {
-        children.push(this.nodes[i])
-      }
-    }
-    return children
+    // if (!this.selfDeep().length) { return [] }
+    // const children = []
+    // const { nodeIndex, nestingLevel } = this
+    // for (let i = nodeIndex + 1; i < this.nodes.length; i++) {
+    //   if (this.nodes[i].nestingLevel <= nestingLevel) {
+    //     return children
+    //   } else if (this.nodes[i].nestingLevel === nestingLevel + 1) {
+    //     children.push(this.nodes[i])
+    //   }
+    // }
+    // return children
+    const { nestingLevel } = this.selfShallow()
+    return this.selfDeep()
+      .filter(node => node.nestingLevel === nestingLevel + 1)
+      .map(node => Xmltr.fromNode(this, node))
   }
 
   isTagNode () {
@@ -306,11 +330,11 @@ class Xmltr {
     return this._nodeDescription()[0] === '#'
   }
 
-  _findNodeRange () {
-    const from = this.nodeIndex
+  selfRange () {
+    const from = this.range.from
     let length = 1
     for (let i = from + 1; i < this.nodes.length; i++) {
-      if (this.nodes[i].nestingLevel > this.nestingLevel) {
+      if (this.nodes[i].nestingLevel > this.selfShallow().nestingLevel) {
         length++
       } else {
         break
@@ -319,36 +343,38 @@ class Xmltr {
     return { from, length }
   }
 
-  _cloneNodeDeep () {
-    const { from, length } = this._findNodeRange()
-    const deepClone = []
-    for (let i = from; i < from + length; i++) {
-      deepClone.push(this.nodes[i]._cloneNodeShallow())
-    }
-    return deepClone
-  }
+  // _cloneNodeDeep () {
+  //   const { from, length } = this.selfDeep()
+  //   const deepClone = []
+  //   for (let i = from; i < from + length; i++) {
+  //     deepClone.push(this.nodes[i]._cloneNodeShallow())
+  //   }
+  //   return deepClone
+  // }
 
-  _cloneNodeShallow () {
-    const { line, nodeIndex, nestingLevel } = this
-    return JSON.parse(JSON.stringify({ line, nodeIndex, nestingLevel }))
-  }
+  // _cloneNodeShallow () {
+  //   const { line, nodeIndex, nestingLevel } = this
+  //   return JSON.parse(JSON.stringify({ line, nodeIndex, nestingLevel }))
+  // }
 
   _throwErrorWhenNotSingleNode () {
+    return
     if (this.range.to - this.range.from !== 1) {
       throw Error('Xmltr points at many nodes, not a single node')
     }
   }
 
   _throwErrorWhenNotSingleTagNode () {
+    return
     this._throwErrorWhenNotSingleNode()
     if (this.isTextNode()) {
       throw Error('Accessing tag in text node')
     }
   }
 
-  root () {
-    return this.nodes[0]
-  }
+  // root () {
+  //   return Xmltr.fromNode(this, this.nodes[0])
+  // }
 
   // byAttrsVals (...filters) {
   //   return this.nodes.filter(node => {
@@ -428,8 +454,9 @@ class Xmltr {
   //   return `[\n${this.toArrayOfStrings()}\n]`
   // }
 
-  _nodeDescription (node) {
-    const current = node || this.nodes[this.range.from]
+  _nodeDescription () {
+    const current = this.selfShallow()
+    //console.log('CURRENT', current.line)
     if (current.line[0] === '<') {
       return current.line.substr(1, current.line.length - 2)
     }
@@ -439,10 +466,19 @@ class Xmltr {
 
   toString () {
     const results = this.nodes.slice(this.range.from, this.range.to).map(node => {
-      return `[nodeDescription=[${this._nodeDescription(node)}] nodeIndex=[${node.nodeIndex}] nestingLevel=[${node.nestingLevel}]]`
+      return `[nodeDescription=[${Xmltr.fromNode(this, node)._nodeDescription()}] nodeIndex=[${node.nodeIndex}] nestingLevel=[${node.nestingLevel}]]`
     })
 
     return results.length === 1 ? results[0] : results
+  }
+
+  selfShallow () {
+    return this.nodes[this.range.from]
+  }
+
+  selfDeep () {
+    const { from, length } = this.selfRange()
+    return this.nodes.slice(from, from + length)
   }
 }
 
