@@ -12,6 +12,13 @@ class WrongAttributeNameTypeProvided extends Error {
   }
 }
 
+class InvalidDataPassedToConstructor extends Error {
+  constructor (message) {
+    super(message)
+    this.name = 'InvalidDataPassedToConstructor'
+  }
+}
+
 class Xmltr {
   constructor (data, id) {
     if (typeof data === 'string') {
@@ -19,7 +26,7 @@ class Xmltr {
     } else if (Array.isArray(data)) {
       this.nodes = data
     } else {
-      throw new Error('Invalid data passed to Nodes constructor')
+      throw new InvalidDataPassedToConstructor('Invalid data passed to Nodes constructor')
     }
     this.id = id || this.nodes[0].id
   }
@@ -29,28 +36,16 @@ class Xmltr {
   }
 
   getAttr (...names) {
-    if (names.length < 1) {
-      throw new NoAttributeNameProvided('Node::getAttr requires at least one attribute name')
-    }
-    if (names.map(name => typeof name === 'string').includes(false)) {
-      throw new WrongAttributeNameTypeProvided('Node::getAttr requires all names to be strings')
-    }
-
+    this._throwError1('Xmltr', 'getAttr', ...names)
     const values = names.map(name => this._tagNodeArrayDescription(name).first.attrValue)
     return values.length > 1 ? values : values[0]
   }
 
   getMultiAttr (...names) {
-    if (names.length < 1) {
-      throw new NoAttributeNameProvided('Node::getMultiAttr requires at least one attribute name')
-    }
-    if (names.map(name => typeof name === 'string').includes(false)) {
-      throw new WrongAttributeNameTypeProvided('Node::getMultiAttr requires all names to be strings')
-    }
-
+    this._throwError1('Xmltr', 'getMultiAttr', ...names)
     const nameValues = names
       .map(name =>
-        this._tagNodeArrayDescription(name).all.attrsValues.map(av => av[1])
+        this._tagNodeArrayDescription(name).all.attrsValues.map(attrValue => attrValue[1])
       )
       .map(nameValues => nameValues.filter(nameValue => nameValue !== undefined))
 
@@ -58,13 +53,7 @@ class Xmltr {
   }
 
   rmAttr (...names) {
-    if (names.length < 1) {
-      throw new NoAttributeNameProvided('Node:rmAttr requires at least one attribute name')
-    }
-    if (names.map(name => typeof name === 'string').includes(false)) {
-      throw new WrongAttributeNameTypeProvided('Node::rmAttr requires all names to be strings')
-    }
-
+    this._throwError1('Xmltr', 'rmAttr', ...names)
     const nameValues = names.map(name => {
       const { tagName, attrIndex, attrs, attrName } = this._tagNodeArrayDescription(name).first
 
@@ -81,13 +70,7 @@ class Xmltr {
   }
 
   rmMultiAttr (...names) {
-    if (names.length < 1) {
-      throw new NoAttributeNameProvided('Node:rmMultiAttr requires at least one attribute name')
-    }
-    if (names.map(name => typeof name === 'string').includes(false)) {
-      throw new WrongAttributeNameTypeProvided('Node::rmMultiAttr requires all names to be strings')
-    }
-
+    this._throwError1('Xmltr', 'rmMultiAttr', ...names)
     const attrsIndexes = names
       .reduce((indexes, name) => {
         indexes.push(...this._tagNodeArrayDescription(name).all.attrsIndexes)
@@ -344,12 +327,8 @@ class Xmltr {
   }
 
   _nodeDescription () {
-    const current = this.selfShallow()
-    if (current.line[0] === '<') {
-      return current.line.substr(1, current.line.length - 2)
-    }
-
-    return `#text ${current.line}`
+    const line = this.selfShallow().line
+    return line[0] === '<' ? line.substr(1, line.length - 2) : `#text ${line}`
   }
 
   reprShallow () {
@@ -398,11 +377,21 @@ class Xmltr {
     }
     return { from, length }
   }
+
+  _throwError1 (className, methodName, ...args) {
+    if (args.length < 1) {
+      throw new NoAttributeNameProvided(`${className}::${methodName} requires at least one attribute names`)
+    }
+    if (args.map(name => typeof name === 'string').includes(false)) {
+      throw new WrongAttributeNameTypeProvided(`${className}::${methodName} requires all names to be strings.`)
+    }
+  }
 }
 
 Xmltr.Errors = {
   NoAttributeNameProvided,
-  WrongAttributeNameTypeProvided
+  WrongAttributeNameTypeProvided,
+  InvalidDataPassedToConstructor
 }
 
 export { Xmltr }

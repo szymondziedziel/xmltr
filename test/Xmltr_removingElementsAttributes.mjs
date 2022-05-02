@@ -47,12 +47,12 @@ const SOME_COMPLEX_XML = `
 const SOME_SIMPLE_XML = '<tag bool bool1="true" bool2="bool3" bool4="bool5 bool6 bool7 " bool1 bool1="false">'
 
 describe('Xmltr', function () {
-  describe('getAttr method', function () {
-    describe('Getting no attributes with getAttr method', function () {
+  describe('rmAttr method', function () {
+    describe('Removing no attributes with rmAttr method', function () {
       it('It should throw error when no attribute name provided', function () {
         const tree = new Xmltr(SOME_COMPLEX_XML)
         assert.throws(
-          () => tree.getAttr(),
+          () => tree.rmAttr(),
           Xmltr.Errors.NoAttributeNameProvided
         )
       })
@@ -60,101 +60,101 @@ describe('Xmltr', function () {
       it('It should throw error when any of provided attribute name is not of string type', function () {
         const tree = new Xmltr(SOME_COMPLEX_XML)
         assert.throws(
-          () => tree.getAttr('test', 2, [], {}),
+          () => tree.rmAttr('test', 2, [], {}),
           Xmltr.Errors.WrongAttributeNameTypeProvided
         )
       })
     })
 
-    describe('Getting single attribute with getAttr method', function () {
-      it('It should get single attribute value of first Test tag', function () {
+    describe('Removing single attribute with rmAttr method', function () {
+      it('It should remove single attribute value of first Test tag', function () {
         const tree = new Xmltr(SOME_COMPLEX_XML)
         assert.equal(
-          tree.byTags('Test')[0].getAttr('TestId'),
-          '0001'
+          tree.byTags('Test')[0].rmAttr('TestId'),
+          true
         )
       })
 
-      it('It should get single attribute value of second Test tag', function () {
+      it('It should remove single attribute value of second Test tag', function () {
         const tree = new Xmltr(SOME_COMPLEX_XML)
         assert.equal(
-          tree.byTags('Test')[1].getAttr('TestId'),
-          '0002'
+          tree.byTags('Test')[1].rmAttr('TestId'),
+          true
         )
       })
 
-      it('It should get single attribute value of last Test tag', function () {
+      it('It should remove single attribute value of last Test tag', function () {
         const tree = new Xmltr(SOME_COMPLEX_XML)
         assert.equal(
-          tree.byTags('Test')[5].getAttr('TestId'),
-          '0006'
+          tree.byTags('Test')[5].rmAttr('TestId'),
+          true
         )
       })
 
-      it('It should get attributes values of all Test tags', function() {
+      it('It should remove attributes values of all Test tags', function () {
         const tree = new Xmltr(SOME_COMPLEX_XML)
         assert.deepEqual(
-          tree.byTags('Test').map(tag => tag.getAttr('TestId')),
-          [1, 2, 3, 4, 5, 6].map(e => e.toString().padStart(4, '0'))
+          tree.byTags('Test').map(tag => tag.rmAttr('TestId')),
+          [1, 2, 3, 4, 5, 6].map(e => true)
         )
       })
     })
 
-    describe('Getting multiple attribute with getAttr method', function () {
-      it('It should get multiple attributes value of first Test tag', function () {
+    describe('Removing multiple attribute with rmAttr method', function () {
+      it('It should remove multiple attributes value of first Test tag', function () {
         const tree = new Xmltr(SOME_COMPLEX_XML)
         assert.deepEqual(
-          tree.byTags('Test')[0].getAttr('TestId', 'TestType'),
-          ['0001', 'CMD']
+          tree.byTags('Test')[0].rmAttr('TestId', 'TestType'),
+          [true, true]
         )
       })
 
-      it('It should get multiple attributes value of first Test tag, also responds with nulls to non existing', function () {
+      it('It should remove multiple attributes value of first Test tag, also responds with nulls to non existing', function () {
         const tree = new Xmltr(SOME_COMPLEX_XML)
         assert.deepEqual(
-          tree.byTags('Test')[0].getAttr('a', 'TestId', 'b', 'TestType', 'c'),
-          [null, '0001', null, 'CMD', null]
+          tree.byTags('Test')[0].rmAttr('a', 'TestId', 'b', 'TestType', 'c'),
+          [false, true, false, true, false]
         )
       })
     })
 
-    describe('Getting single boolean attribute with getAttr method', function () {
+    describe('Removing single boolean attribute with rmAttr method', function () {
       it('It should return boolean attribute as null when not found', function () {
         const tree = new Xmltr(SOME_SIMPLE_XML)
-        assert.equal(tree.getAttr('non-existing-bool'), null)
+        assert.equal(tree.rmAttr('non-existing-bool'), false)
       })
 
       it('It should return boolean attribute as true when found', function () {
         const tree = new Xmltr(SOME_SIMPLE_XML)
-        assert.equal(tree.getAttr('bool'), true)
+        assert.equal(tree.rmAttr('bool'), true)
       })
 
       it('It should return attribute value as string-true when found and is not boolean attribute', function () {
         const tree = new Xmltr(SOME_SIMPLE_XML)
-        assert.equal(tree.getAttr('bool1'), 'true')
+        assert.equal(tree.rmAttr('bool1'), true)
       })
 
       it('It should return boolean attribute as null when attribute name is value of other attribute', function () {
         const tree = new Xmltr(SOME_SIMPLE_XML)
-        assert.equal(tree.getAttr('bool3'), null)
+        assert.equal(tree.rmAttr('bool3'), false)
       })
 
       it('It should return boolean attribute as null when attribute name is part of value of other attribute', function () {
         const tree = new Xmltr(SOME_SIMPLE_XML)
-        assert.equal(tree.getAttr('bool4'), 'bool5 bool6 bool7 ')
-        assert.equal(tree.getAttr('bool5'), null)
-        assert.equal(tree.getAttr('bool6'), null)
-        assert.equal(tree.getAttr('bool7'), null)
+        assert.equal(tree.rmAttr('bool4'), true)
+        assert.equal(tree.rmAttr('bool5'), false)
+        assert.equal(tree.rmAttr('bool6'), false)
+        assert.equal(tree.rmAttr('bool7'), false)
       })
     })
   })
 
-  describe('getMultiAttr method', function () {
-    describe('Getting no attributes with getMultiAttr method', function () {
+  describe('rmMultiAttr method', function () {
+    describe('Removing no attributes with rmMultiAttr method', function () {
       it('It should throw error when no attribute name provided', function () {
         const tree = new Xmltr(SOME_COMPLEX_XML)
         assert.throws(
-          () => tree.getMultiAttr(),
+          () => tree.rmMultiAttr(),
           Xmltr.Errors.NoAttributeNameProvided
         )
       })
@@ -162,54 +162,54 @@ describe('Xmltr', function () {
       it('It should throw error when any of provided attribute name is not of string type', function () {
         const tree = new Xmltr(SOME_COMPLEX_XML)
         assert.throws(
-          () => tree.getMultiAttr('test', 2, [], {}),
+          () => tree.rmMultiAttr('test', 2, [], {}),
           Xmltr.Errors.WrongAttributeNameTypeProvided
         )
       })
     })
 
-    describe('Getting single attribute with getMultiAttr method', function () {
-      it('It should get all attribute values of first Test tag', function () {
+    describe('Removing single attribute with rmMultiAttr method', function () {
+      it('It should remove all attribute values of first Test tag', function () {
         const tree = new Xmltr(SOME_COMPLEX_XML)
         assert.deepEqual(
-          tree.byTags('Test')[0].getMultiAttr('TestType'),
-          ['CMD', 'GUI']
+          tree.byTags('Test')[0].rmMultiAttr('TestType'),
+          [2]
         )
       })
 
-      it('It should get all attribute values of second Test tag', function () {
+      it('It should remove all attribute values of second Test tag', function () {
         const tree = new Xmltr(SOME_COMPLEX_XML)
         assert.deepEqual(
-          tree.byTags('Test')[1].getMultiAttr('TestType'),
-          ['CMD', 'OTHER']
-        )
-      })
-    })
-
-    describe('Getting multiple attribute with getMultiAttr method', function () {
-      it('It should get multiple attributes value of first Test tag', function () {
-        const tree = new Xmltr(SOME_COMPLEX_XML)
-        assert.deepEqual(
-          tree.byTags('Test')[0].getMultiAttr('TestId', 'TestType'),
-          [['0001'], ['CMD', 'GUI']]
-        )
-      })
-
-      it('It should get multiple attributes value of first Test tag, also responds with empty arrays to non existing', function () {
-        const tree = new Xmltr(SOME_COMPLEX_XML)
-        assert.deepEqual(
-          tree.byTags('Test')[0].getMultiAttr('a', 'TestId', 'b', 'TestType', 'c'),
-          [[], ['0001'], [], ['CMD', 'GUI'], []]
+          tree.byTags('Test')[1].rmMultiAttr('TestType'),
+          [2]
         )
       })
     })
 
-    describe('Getting multiple mixed attributes with getMultiAttr method', function () {
-      it('It should get all mixed attributes\' values, also should respond with empty arrays to non existing', function () {
+    describe('Removing multiple attribute with rmMultiAttr method', function () {
+      it('It should remove multiple attributes value of first Test tag', function () {
+        const tree = new Xmltr(SOME_COMPLEX_XML)
+        assert.deepEqual(
+          tree.byTags('Test')[0].rmMultiAttr('TestId', 'TestType'),
+          [1, 2]
+        )
+      })
+
+      it('It should remove multiple attributes value of first Test tag, also responds with empty arrays to non existing', function () {
+        const tree = new Xmltr(SOME_COMPLEX_XML)
+        assert.deepEqual(
+          tree.byTags('Test')[0].rmMultiAttr('a', 'TestId', 'b', 'TestType', 'c'),
+          [0, 1, 0, 2, 0]
+        )
+      })
+    })
+
+    describe('Removing multiple mixed attributes with rmMultiAttr method', function () {
+      it('It should remove all mixed attributes\' values, also should respond with empty arrays to non existing', function () {
         const tree = new Xmltr(SOME_SIMPLE_XML)
         assert.deepEqual(
-          tree.getMultiAttr('a', 'bool', 'bool1', 'bool2', 'bool4'),
-          [[], [true], ['true', true, 'false'], ['bool3'], ['bool5 bool6 bool7 ']]
+          tree.rmMultiAttr('a', 'bool', 'bool1', 'bool2', 'bool4'),
+          [0, 1, 3, 1, 1]
         )
       })
     })
